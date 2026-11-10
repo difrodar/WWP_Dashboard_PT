@@ -4,6 +4,8 @@
 
 > **Academic Prototype — Synthetic Data Only.** This application uses fictional data and is **not connected to WWP, Salesforce, or DonorDrive systems.** It does not send email, process donations, or modify any real record. It is not affiliated with or endorsed by WWP and uses no WWP branding.
 
+**Team review handout (demo script and open decisions):** [docs/TEAM_REVIEW.md](docs/TEAM_REVIEW.md)
+
 ---
 
 ## 1. Overview and academic purpose
@@ -169,6 +171,28 @@ To act on an event, select its name in the table. A detail drawer opens. Close i
 
 Every action shows a confirmation toast, updates the KPIs and the table right away, and is labeled **Demo action** in the timeline. Seed timelines contain only activities supported by the synthetic record. No action sends a message or processes a transaction.
 
+### Working the queue
+
+- **Days and weeks since event.** The Days Since Event column shows both, e.g. `45 · 6 wk`, as the client contact requested. Sorting still uses days.
+- **KPI cards as shortcuts:**
+  - *High-Priority Events* and *Events Awaiting Processing* filter the active queue. Click again to remove the filter. An active card has a highlighted outline.
+  - *Total Flagged $0 Events* returns to the whole queue.
+  - *Average Days Since Event* is information only.
+- **Compact filters.** Search, Priority, and Review status are always visible. **More filters** opens the rest: minimum days, event type, review reason, specialist, and date range. The button shows how many hidden filters are active, and every active filter also appears as a removable chip.
+
+### Look: Neutral or WWP colors
+
+The **Look** switch in the header changes between two themes.
+
+| Theme | What it uses |
+|---|---|
+| **Neutral** (default) | A plain navy palette |
+| **WWP colors** | Colors taken from WWP's public stylesheets: navy `#002F60`, blue `#005DA5`, light gray `#EEEEEE`, and red `#B5121B` as a thin accent only. Fonts are Montserrat and Roboto Slab, bundled with the app so no external font requests are made. |
+
+The theme is implemented as CSS variable overrides in [`src/index.css`](src/index.css), so no component changes are needed to switch. The choice is saved per browser under `cfm-theme` and is **not** affected by Reset Demo Data.
+
+> **Branding caution.** The WWP theme uses no logo and keeps the synthetic-data disclaimer, which adds "not an official WWP tool" while this theme is on. Because the demo URL is public, keep **Neutral** as the default until WWP agrees to the use of its colors. The original requirement said not to use official WWP branding without permission.
+
 ## 12. localStorage and resetting the demo
 
 - All edits, including the as-of date, are saved under the browser key `cfm-demo-state-v1` and survive a page refresh.
@@ -184,7 +208,7 @@ npm run test:watch    # watch mode
 npm run typecheck     # TypeScript only
 ```
 
-There are 61 automated tests in three files.
+There are 70 automated tests in three files.
 
 - **`src/utils/eventRules.test.ts`** covers business rules and seed data:
   - excludes 29 days; excludes exactly 30 days; includes 31 days
@@ -202,6 +226,9 @@ There are 61 automated tests in three files.
   - awaiting-processing vs. resolve behavior and the KPI updates
   - the data-quality tab and as-of date recalculation
   - **persistence across a remount (simulated refresh)** and **reset with confirm or cancel**
+  - collapsed "More filters" with the hidden-filter count; the days/weeks display
+  - KPI shortcut toggles
+  - theme switch persistence, including that Reset Demo Data does not change the theme
 
 ## 14. Relationship to the process model
 
@@ -224,7 +251,7 @@ The dashboard is **one component** of the proposed end-to-end process, not the w
 | Configurable as-of date | Header date input → `useEventData.setAsOfDate` |
 | Flagging rule and boundaries | `eventRules.ts → isFlagged`, `getMonitoringResult` |
 | KPI cards (4) | `KpiCards.tsx`, `dashboardMetrics.ts` |
-| Filters (7 required + search) | `FilterPanel.tsx`, `eventFilters.ts → applyFilters` |
+| Filters (7 required + search) | `FilterPanel.tsx` (3 always visible, the rest under "More filters"), `eventFilters.ts → applyFilters` |
 | Sorting (date, days, priority, name) | Sortable column headers, `sortEvents` |
 | Main table (10 columns) | `EventsTable.tsx` |
 | Views for non-flagged and data-quality records | Tabs: Active Flagged Queue / Data-Quality Exceptions / All Events |
@@ -232,7 +259,7 @@ The dashboard is **one component** of the proposed end-to-end process, not the w
 | Detail drawer with all fields and timeline | `EventDrawer.tsx`, `Timeline.tsx` |
 | Demo actions | `CaseManagement.tsx`, `eventActions.ts` |
 | Persistence and reset with confirmation | `demoStorage.ts`, `ConfirmDialog.tsx` |
-| Optional extras | Search, visible record count, overdue highlighting, KPI definitions (tooltips and screen-reader text), "How monitoring works" panel |
+| Optional extras | Search, visible record count, overdue highlighting, KPI definitions (tooltips and screen-reader text), "How monitoring works" panel, weeks since event, KPI shortcut filters, Neutral/WWP-colors theme |
 
 ## 16. Data dictionary
 

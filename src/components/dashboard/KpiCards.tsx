@@ -1,6 +1,9 @@
 import type { ReactNode } from 'react';
 import type { DashboardKpis } from '../../utils/dashboardMetrics';
 
+/** KPI shortcuts that apply a filter to the active queue. */
+export type KpiShortcut = 'all' | 'high' | 'awaiting';
+
 interface KpiCardProps {
   label: string;
   value: string;
@@ -8,24 +11,56 @@ interface KpiCardProps {
   definition: string;
   accent: string;
   icon: ReactNode;
+  /** When set, the card is a button (a toggle when `pressed` is also set). */
+  onClick?: () => void;
+  pressed?: boolean;
+  actionLabel?: string;
 }
 
-function KpiCard({ label, value, caption, definition, accent, icon }: KpiCardProps) {
-  return (
-    <div data-kpi={label} className="relative overflow-hidden rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
-      <div className={`absolute inset-y-0 left-0 w-1 ${accent}`} aria-hidden="true" />
-      <div className="flex items-start justify-between gap-2">
-        <dt className="text-sm font-medium text-slate-600">{label}</dt>
+function KpiCard({ label, value, caption, definition, accent, icon, onClick, pressed, actionLabel }: KpiCardProps) {
+  const body = (
+    <>
+      <span className={`absolute inset-y-0 left-0 w-1 ${accent}`} aria-hidden="true" />
+      <span className="flex items-start justify-between gap-2">
+        <span className="text-sm font-medium text-slate-600">{label}</span>
         <span className="text-slate-400" title={definition} aria-hidden="true">
           {icon}
         </span>
+      </span>
+      <span data-kpi-value className="mt-0.5 block text-2xl font-semibold tabular-nums tracking-tight text-slate-900">
+        {value}
+      </span>
+      <span className="block truncate text-xs text-slate-500">{caption}</span>
+      <span className="sr-only">
+        Definition: {definition}
+        {actionLabel ? ` ${actionLabel}` : ''}
+      </span>
+    </>
+  );
+
+  const base = 'relative block w-full overflow-hidden rounded-lg bg-white p-3 pl-4 text-left shadow-sm ring-1';
+
+  if (!onClick) {
+    return (
+      <div data-kpi={label} className={`${base} ring-slate-200`}>
+        {body}
       </div>
-      <dd>
-        <span data-kpi-value className="mt-1 block text-3xl font-semibold tabular-nums tracking-tight text-slate-900">{value}</span>
-        <span className="mt-1 block text-xs text-slate-500">{caption}</span>
-        <span className="sr-only">Definition: {definition}</span>
-      </dd>
-    </div>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      data-kpi={label}
+      aria-pressed={pressed}
+      onClick={onClick}
+      title={actionLabel}
+      className={`${base} cursor-pointer transition-shadow hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 ${
+        pressed ? 'ring-2 ring-brand-600' : 'ring-slate-200 hover:ring-slate-300'
+      }`}
+    >
+      {body}
+    </button>
   );
 }
 
@@ -53,7 +88,15 @@ const icons = {
   ),
 };
 
-export function KpiCards({ kpis, filtersActive }: { kpis: DashboardKpis; filtersActive: boolean }) {
+interface KpiCardsProps {
+  kpis: DashboardKpis;
+  filtersActive: boolean;
+  /** Which toggle shortcuts are currently applied. */
+  active: { high: boolean; awaiting: boolean };
+  onShortcut: (shortcut: KpiShortcut) => void;
+}
+
+export function KpiCards({ kpis, filtersActive, active, onShortcut }: KpiCardsProps) {
   const scope = filtersActive ? 'flagged events matching filters' : 'active flagged events';
   const none = kpis.flaggedCount === 0;
 
@@ -64,10 +107,10 @@ export function KpiCards({ kpis, filtersActive }: { kpis: DashboardKpis; filters
           Monitoring summary
         </h2>
         <p className="text-xs text-slate-500">
-          KPIs cover active flagged events only{filtersActive ? ' that match the current filters' : ''}.
+          Click a card to filter the queue · KPIs cover active flagged events only{filtersActive ? ' that match the current filters' : ''}.
         </p>
       </div>
-      <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <KpiCard
           label="Total Flagged $0 Events"
           value={String(kpis.flaggedCount)}
@@ -75,6 +118,8 @@ export function KpiCards({ kpis, filtersActive }: { kpis: DashboardKpis; filters
           definition="Events with a valid date, more than 30 days old, $0 posted, not resolved and not closed."
           accent="bg-rose-500"
           icon={icons.flag}
+          onClick={() => onShortcut('all')}
+          actionLabel="Show the whole active queue (clears priority and status filters)."
         />
         <KpiCard
           label="High-Priority Events"
@@ -83,14 +128,20 @@ export function KpiCards({ kpis, filtersActive }: { kpis: DashboardKpis; filters
           definition="Flagged events with a staff-assigned (demonstration) priority of High."
           accent="bg-red-600"
           icon={icons.alert}
+          onClick={() => onShortcut('high')}
+          pressed={active.high}
+          actionLabel={active.high ? 'Remove the High priority filter.' : 'Show only High priority events.'}
         />
         <KpiCard
           label="Events Awaiting Processing"
           value={String(kpis.awaitingProcessingCount)}
-          caption={none ? 'No flagged events' : 'Bank or check processing pending — still in queue'}
+          caption={none ? 'No flagged events' : 'Bank or check pending — still in queue'}
           definition="Flagged events whose review status is Awaiting Bank or Check Processing. These remain in the active queue."
           accent="bg-sky-500"
           icon={icons.bank}
+          onClick={() => onShortcut('awaiting')}
+          pressed={active.awaiting}
+          actionLabel={active.awaiting ? 'Remove the Awaiting Processing filter.' : 'Show only events awaiting bank or check processing.'}
         />
         <KpiCard
           label="Average Days Since Event"
@@ -100,7 +151,7 @@ export function KpiCards({ kpis, filtersActive }: { kpis: DashboardKpis; filters
           accent="bg-slate-500"
           icon={icons.clock}
         />
-      </dl>
+      </div>
     </section>
   );
 }

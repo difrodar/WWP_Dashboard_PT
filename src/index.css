@@ -1,9 +1,16 @@
 @import 'tailwindcss';
 
+/*
+ * Two themes, switched by <html data-theme="…">:
+ *   neutral (default) — restrained navy, intentionally not WWP's brand.
+ *   wwp               — WWP-inspired palette for demos (no logo; see README).
+ * Tailwind v4 utilities read these CSS variables (bg-brand-700 → var(--color-brand-700)),
+ * so overriding them below re-themes every component.
+ */
 @theme {
   --font-sans: 'Inter', 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
+  --font-display: 'Inter', 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
 
-  /* Neutral navy palette — intentionally not WWP brand colors. */
   --color-brand-50: #f0f5fa;
   --color-brand-100: #dce7f2;
   --color-brand-200: #b9cee4;
@@ -13,6 +20,39 @@
   --color-brand-700: #2a4d75;
   --color-brand-800: #223f60;
   --color-brand-900: #172c45;
+
+  /* Small highlight (logo dot). */
+  --color-accent: #f59e0b;
+  /* Stripe under the header — matches the header in the neutral theme, so it is invisible. */
+  --color-stripe: #172c45;
+  /* Page background. */
+  --color-canvas: #f1f5f9;
+}
+
+/*
+ * WWP-inspired palette, taken from WWP's public stylesheets:
+ * navy #002F60 and red #B5121B (DonorDrive brand-color-2/1), blue #005DA5,
+ * light gray #EEEEEE; fonts Montserrat (body) and Roboto Slab (headings).
+ * Red is used only as an accent so it never competes with the red that means
+ * "High priority" or "flagged".
+ */
+:root[data-theme='wwp'] {
+  --font-sans: 'Montserrat', 'Segoe UI', system-ui, Arial, sans-serif;
+  --font-display: 'Roboto Slab', Georgia, 'Times New Roman', serif;
+
+  --color-brand-50: #eef3f9;
+  --color-brand-100: #dbe6f2;
+  --color-brand-200: #b3cbe3;
+  --color-brand-300: #86a9cf;
+  --color-brand-500: #005da5;
+  --color-brand-600: #004f8f;
+  --color-brand-700: #003f7d;
+  --color-brand-800: #00336a;
+  --color-brand-900: #002f60;
+
+  --color-accent: #b5121b;
+  --color-stripe: #b5121b;
+  --color-canvas: #eeeeee;
 }
 
 html {
@@ -21,7 +61,7 @@ html {
 }
 
 body {
-  @apply bg-slate-100 text-slate-900;
+  @apply bg-canvas font-sans text-slate-900;
 }
 
 summary::-webkit-details-marker {

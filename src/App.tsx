@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { FundraisingEvent } from './types/event';
+import { AWAITING_PROCESSING_STATUS } from './types/event';
 import { useEventData } from './hooks/useEventData';
+import { useTheme } from './hooks/useTheme';
 import { MOCK_SPECIALISTS, DEMO_USER } from './data/mockSpecialists';
 import { formatLongDate } from './utils/dateUtils';
 import { computeKpis } from './utils/dashboardMetrics';
 import {
+  ALL,
   DEFAULT_FILTERS,
   DEFAULT_SORT,
   SORT_LABELS,
@@ -28,7 +31,7 @@ import {
   type CaseUpdate,
 } from './utils/eventActions';
 import { AppHeader } from './components/layout/AppHeader';
-import { KpiCards } from './components/dashboard/KpiCards';
+import { KpiCards, type KpiShortcut } from './components/dashboard/KpiCards';
 import { ProcessInfo } from './components/dashboard/ProcessInfo';
 import { FilterPanel } from './components/filters/FilterPanel';
 import { ViewTabs } from './components/events/ViewTabs';
@@ -67,6 +70,7 @@ const VIEW_INFO: Record<ViewMode, { title: string; description: string; style: s
 
 export default function App() {
   const { events, asOfDate, setAsOfDate, updateEvent, resetDemo } = useEventData();
+  const { theme, setTheme } = useTheme();
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
   const [sort, setSort] = useState<SortState>(DEFAULT_SORT);
   const [view, setView] = useState<ViewMode>('queue');
@@ -108,6 +112,30 @@ export default function App() {
 
   const clearFilters = () => setFilters(DEFAULT_FILTERS);
 
+  // KPI card shortcuts: filter the active queue (High / Awaiting toggle on and off).
+  const kpiActive = {
+    high: view === 'queue' && filters.priority === 'High',
+    awaiting: view === 'queue' && filters.reviewStatus === AWAITING_PROCESSING_STATUS,
+  };
+  const handleKpiShortcut = (shortcut: KpiShortcut) => {
+    let turningOn = true;
+    if (shortcut === 'all') {
+      setFilters((f) => ({ ...f, priority: ALL, reviewStatus: ALL }));
+    } else if (shortcut === 'high') {
+      turningOn = !kpiActive.high;
+      setFilters((f) => ({ ...f, priority: turningOn ? 'High' : ALL }));
+    } else {
+      turningOn = !kpiActive.awaiting;
+      setFilters((f) => ({ ...f, reviewStatus: turningOn ? AWAITING_PROCESSING_STATUS : ALL }));
+    }
+    setView('queue');
+    // Bring the table into view only when it is mostly off-screen (e.g. on phones).
+    const panel = document.getElementById('events-heading')?.parentElement;
+    if (turningOn && panel && panel.getBoundingClientRect().top > window.innerHeight * 0.6) {
+      panel.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
   const emptyState = (() => {
     if (activeFilterCount > 0) {
       return (
@@ -139,14 +167,20 @@ export default function App() {
   const info = VIEW_INFO[view];
 
   return (
-    <div className="min-h-screen bg-slate-100">
+    <div className="min-h-screen bg-canvas">
       <a href="#events-panel" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded focus:bg-white focus:px-3 focus:py-2 focus:shadow">
         Skip to events table
       </a>
-      <AppHeader asOfDate={asOfDate} onAsOfDateChange={setAsOfDate} onResetDemo={() => setConfirmReset(true)} />
+      <AppHeader
+        asOfDate={asOfDate}
+        onAsOfDateChange={setAsOfDate}
+        onResetDemo={() => setConfirmReset(true)}
+        theme={theme}
+        onThemeChange={setTheme}
+      />
 
       <main className="mx-auto max-w-[1440px] space-y-5 px-4 py-6 sm:px-6 lg:px-8">
-        <KpiCards kpis={kpis} filtersActive={activeFilterCount > 0} />
+        <KpiCards kpis={kpis} filtersActive={activeFilterCount > 0} active={kpiActive} onShortcut={handleKpiShortcut} />
         <ProcessInfo />
         <FilterPanel filters={filters} options={filterOptions} activeCount={activeFilterCount} onChange={setFilters} onReset={clearFilters} />
 

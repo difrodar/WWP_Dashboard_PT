@@ -47,13 +47,69 @@ describe('Community Fundraising Monitor', () => {
     expect(kpi('Total Flagged $0 Events')).toBe('4');
     expect(screen.getByRole('button', { name: /Remove filter Priority: High/ })).toBeInTheDocument();
 
+    // Secondary filters are collapsed by default.
+    const more = screen.getByRole('button', { name: /More filters/ });
+    expect(more).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByLabelText('Event type')).not.toBeVisible();
+    await user.click(more);
+    expect(screen.getByRole('button', { name: /Fewer filters/ })).toHaveAttribute('aria-expanded', 'true');
     await user.selectOptions(screen.getByLabelText('Event type'), 'Bake Sale');
+    // Collapsing keeps the hidden filter visible as a chip and counted on the toggle.
+    await user.click(screen.getByRole('button', { name: /Fewer filters/ }));
+    expect(screen.getByRole('button', { name: 'More filters 1' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Remove filter Type: Bake Sale/ })).toBeInTheDocument();
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
     expect(screen.getByText('No events match these filters')).toBeInTheDocument();
     expect(kpi('Average Days Since Event')).toBe('—');
 
     await user.click(screen.getByRole('button', { name: 'Clear all filters' }));
     expect(bodyRows()).toHaveLength(10);
+  });
+
+  it('shows weeks alongside days since event', () => {
+    render(<App />);
+    const row = screen.getByRole('button', { name: 'Summit Ridge Veterans Motorcycle Run' }).closest('tr')!;
+    expect(row).toHaveTextContent('45 · 6 wk');
+  });
+
+  it('KPI cards act as quick filters for the active queue', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    const high = screen.getByRole('button', { name: /High-Priority Events/ });
+    expect(high).toHaveAttribute('aria-pressed', 'false');
+    await user.click(high);
+    expect(high).toHaveAttribute('aria-pressed', 'true');
+    expect(bodyRows()).toHaveLength(4);
+    await user.click(high);
+    expect(high).toHaveAttribute('aria-pressed', 'false');
+    expect(bodyRows()).toHaveLength(10);
+
+    // From another tab, the Awaiting card jumps back to the queue and filters it.
+    await user.click(screen.getByRole('tab', { name: /All Events/ }));
+    await user.click(screen.getByRole('button', { name: /Events Awaiting Processing/ }));
+    expect(queueTab()).toHaveAttribute('aria-selected', 'true');
+    expect(rowNames().sort()).toEqual(['Cedar Hollow Fall Fun Run', 'Riverbend Community Pancake Breakfast']);
+
+    // Total clears the quick filters.
+    await user.click(screen.getByRole('button', { name: /Total Flagged \$0 Events/ }));
+    expect(bodyRows()).toHaveLength(10);
+  });
+
+  it('switches to the WWP colors theme, remembers it, and keeps it after a demo reset', async () => {
+    const user = userEvent.setup();
+    const first = render(<App />);
+    expect(document.documentElement.dataset.theme).toBe('neutral');
+    await user.click(screen.getByRole('button', { name: 'WWP colors' }));
+    expect(document.documentElement.dataset.theme).toBe('wwp');
+    expect(screen.getByRole('button', { name: 'WWP colors' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByText(/not an official WWP tool/)).toBeInTheDocument();
+    first.unmount();
+
+    render(<App />);
+    expect(document.documentElement.dataset.theme).toBe('wwp');
+    await user.click(screen.getByRole('button', { name: 'Reset Demo Data' }));
+    await user.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Reset demo data' }));
+    expect(document.documentElement.dataset.theme).toBe('wwp');
   });
 
   it('sorts by column header and announces the sort order', async () => {

@@ -8,4 +8,5 @@ process.env.TZ = 'America/Los_Angeles';
 afterEach(() => {
   cleanup();
   window.localStorage.clear();
+  delete document.documentElement.dataset.theme;
 });

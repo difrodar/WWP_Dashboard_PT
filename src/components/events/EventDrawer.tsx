@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import type { FundraisingEvent, ISODate } from '../../types/event';
 import { formatDate } from '../../utils/dateUtils';
-import { formatCurrency } from '../../utils/format';
+import { formatCurrency, pluralize } from '../../utils/format';
 import { MONITORING_RESULT_LABELS, getDaysSinceEvent, getMonitoringResult, isNextActionOverdue } from '../../utils/eventRules';
 import type { CaseUpdate } from '../../utils/eventActions';
 import { MonitoringBadge, PriorityBadge, StatusBadge } from '../shared/Badges';
@@ -115,7 +115,7 @@ export function EventDrawer({ event, asOfDate, specialists, onClose, ...actions 
             <p className="text-xs font-medium text-slate-500">
               {event.id} · {event.sourceSystem}
             </p>
-            <h2 id="drawer-title" className="mt-0.5 text-lg font-semibold text-slate-900">
+            <h2 id="drawer-title" className="mt-0.5 font-display text-lg font-semibold text-slate-900">
               {event.eventName}
             </h2>
             <div className="mt-2 flex flex-wrap gap-1.5">
@@ -151,7 +151,11 @@ export function EventDrawer({ event, asOfDate, specialists, onClose, ...actions 
               <Field label="Event type">{event.eventType}</Field>
               <Field label="Event date">{event.eventDate ? formatDate(event.eventDate) : <span className="italic text-violet-700">Missing — data-quality review</span>}</Field>
               <Field label="Days since event">
-                {days === null ? muted('Not available') : days < 0 ? `Upcoming (in ${-days} days)` : <span className="tabular-nums">{days}</span>}
+                {days === null ? muted('Not available') : days < 0 ? `Upcoming (in ${-days} days)` : (
+                  <span className="tabular-nums">
+                    {days} days <span className="text-slate-500">({days < 7 ? 'under 1 week' : pluralize(Math.floor(days / 7), 'week')})</span>
+                  </span>
+                )}
               </Field>
               <Field label="Posted amount raised">
                 <span className={`tabular-nums ${event.amountRaised === 0 ? 'font-semibold text-rose-700' : ''}`}>{formatCurrency(event.amountRaised)}</span>

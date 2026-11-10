@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import type { FundraisingEvent, ISODate } from '../../types/event';
 import { formatDate } from '../../utils/dateUtils';
-import { formatCurrency } from '../../utils/format';
+import { formatCurrency, formatWeeks } from '../../utils/format';
 import {
   getDaysSinceEvent,
   getMonitoringResult,
@@ -127,7 +127,10 @@ export function EventsTable({ events, asOfDate, view, sort, selectedId, onSortCh
                   ) : days < 0 ? (
                     <span className="text-slate-500">Upcoming (in {-days})</span>
                   ) : (
-                    days
+                    <>
+                      {days}
+                      <span className="text-xs text-slate-500"> · {formatWeeks(days)}</span>
+                    </>
                   )}
                 </td>
                 <td className="px-3 py-3">

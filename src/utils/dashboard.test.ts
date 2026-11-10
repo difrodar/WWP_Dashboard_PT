@@ -22,6 +22,20 @@ import {
 } from './eventActions';
 import { isFlagged } from './eventRules';
 import { addDays } from './dateUtils';
+import { formatWeeks } from './format';
+
+describe('formatWeeks', () => {
+  it.each([
+    [0, '<1 wk'],
+    [6, '<1 wk'],
+    [7, '1 wk'],
+    [13, '1 wk'],
+    [14, '2 wk'],
+    [45, '6 wk'],
+  ])('%i days → %s', (days, expected) => {
+    expect(formatWeeks(days)).toBe(expected);
+  });
+});
 
 const AS_OF = DEMO_AS_OF_DATE;
 const seed = () => createSeedEvents();
