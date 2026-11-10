@@ -1,0 +1,29 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Inter', 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
+
+  /* Neutral navy palette — intentionally not WWP brand colors. */
+  --color-brand-50: #f0f5fa;
+  --color-brand-100: #dce7f2;
+  --color-brand-200: #b9cee4;
+  --color-brand-300: #8eaed0;
+  --color-brand-500: #4a77a8;
+  --color-brand-600: #345f8f;
+  --color-brand-700: #2a4d75;
+  --color-brand-800: #223f60;
+  --color-brand-900: #172c45;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  color-scheme: light;
+}
+
+body {
+  @apply bg-slate-100 text-slate-900;
+}
+
+summary::-webkit-details-marker {
+  display: none;
+}
