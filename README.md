@@ -1,4 +1,4 @@
-# Community Fundraising Monitor
+# Community Fundraising Monitor 
 
 **MIS 306F Team 10 · San Diego State University · Academic prototype for Wounded Warrior Project (WWP)**
 
