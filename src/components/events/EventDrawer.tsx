@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import type { FundraisingEvent, ISODate } from '../../types/event';
 import { formatDate } from '../../utils/dateUtils';
-import { formatCurrency, pluralize } from '../../utils/format';
+import { formatCurrency, formatHostHistory, pluralize } from '../../utils/format';
 import { MONITORING_RESULT_LABELS, getDaysSinceEvent, getMonitoringResult, isNextActionOverdue } from '../../utils/eventRules';
 import type { CaseUpdate } from '../../utils/eventActions';
 import { MonitoringBadge, PriorityBadge, StatusBadge } from '../shared/Badges';
@@ -21,7 +21,7 @@ export interface DrawerActions {
 interface EventDrawerProps extends DrawerActions {
   event: FundraisingEvent;
   asOfDate: ISODate;
-  specialists: string[];
+  accountOwners: string[];
   onClose: () => void;
 }
 
@@ -49,7 +49,7 @@ function Section({ title, children, id }: { title: string; children: ReactNode; 
 
 const muted = (text: string) => <span className="text-slate-400">{text}</span>;
 
-export function EventDrawer({ event, asOfDate, specialists, onClose, ...actions }: EventDrawerProps) {
+export function EventDrawer({ event, asOfDate, accountOwners, onClose, ...actions }: EventDrawerProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const onCloseRef = useRef(onClose);
@@ -148,6 +148,7 @@ export function EventDrawer({ event, asOfDate, specialists, onClose, ...actions 
           <Section title="Event details" id="sec-details">
             <dl className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3">
               <Field label="Host name">{event.hostName}</Field>
+              <Field label="Host history">{formatHostHistory(event.priorRegistrations)}</Field>
               <Field label="Event type">{event.eventType}</Field>
               <Field label="Event date">{event.eventDate ? formatDate(event.eventDate) : <span className="italic text-violet-700">Missing — data-quality review</span>}</Field>
               <Field label="Days since event">
@@ -164,7 +165,7 @@ export function EventDrawer({ event, asOfDate, specialists, onClose, ...actions 
               <Field label="Review status">{event.reviewStatus}</Field>
               <Field label="Review reason">{event.reviewReason}</Field>
               <Field label="Priority">{event.priority} <span className="text-xs text-slate-400">(demo)</span></Field>
-              <Field label="Assigned specialist">{event.assignedSpecialist ?? muted('Unassigned')}</Field>
+              <Field label="Account owner">{event.accountOwner ?? muted('Unassigned')}</Field>
               <Field label="Processing status">{event.processingStatus}</Field>
               <Field label="Last reviewed">{event.lastReviewed ? formatDate(event.lastReviewed) : muted('Not yet reviewed')}</Field>
               <Field label="Next action date">
@@ -188,7 +189,7 @@ export function EventDrawer({ event, asOfDate, specialists, onClose, ...actions 
               key={`${event.id}-${event.timeline.length}`}
               event={event}
               asOfDate={asOfDate}
-              specialists={specialists}
+              accountOwners={accountOwners}
               onSave={actions.onSaveCase}
               onMarkAwaitingProcessing={actions.onMarkAwaitingProcessing}
               onMarkResolved={actions.onMarkResolved}

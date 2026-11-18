@@ -1,8 +1,8 @@
 /**
- * Fictional community fundraising specialists for the demo.
+ * Fictional WWP account owners (staff who own each fundraiser record) for the demo.
  * These are invented names — not WWP staff.
  */
-export const MOCK_SPECIALISTS = [
+export const MOCK_ACCOUNT_OWNERS = [
   'Jordan Alvarez',
   'Priya Natarajan',
   'Marcus Bell',

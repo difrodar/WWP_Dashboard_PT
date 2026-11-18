@@ -30,7 +30,7 @@ export function ProcessInfo() {
         <div>
           <h3 className="font-semibold text-slate-900">5.0 Contact and Follow Up</h3>
           <p className="mt-1">
-            Open an event to record notes, assign a specialist, set a next-action date, and update status. Resolved or closed events leave the
+            Open an event to record notes, assign an account owner, set a next-action date, and update status. Resolved or closed events leave the
             active queue but stay visible under <em>All Events</em>.
           </p>
         </div>

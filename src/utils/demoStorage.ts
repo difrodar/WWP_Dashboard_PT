@@ -3,23 +3,23 @@ import { DEMO_AS_OF_DATE, createSeedEvents } from '../data/mockEvents';
 import { isValidISODate } from './dateUtils';
 
 /** Bump the version if the data model changes so stale browser data is ignored. */
-export const STORAGE_KEY = 'cfm-demo-state-v1';
+export const STORAGE_KEY = 'cfm-demo-state-v2';
 
 export interface DemoState {
-  version: 1;
+  version: 2;
   asOfDate: ISODate;
   events: FundraisingEvent[];
 }
 
 export function createInitialState(): DemoState {
-  return { version: 1, asOfDate: DEMO_AS_OF_DATE, events: createSeedEvents() };
+  return { version: 2, asOfDate: DEMO_AS_OF_DATE, events: createSeedEvents() };
 }
 
 function isDemoState(value: unknown): value is DemoState {
   if (!value || typeof value !== 'object') return false;
   const v = value as Partial<DemoState>;
   return (
-    v.version === 1 &&
+    v.version === 2 &&
     isValidISODate(v.asOfDate) &&
     Array.isArray(v.events) &&
     v.events.every((e) => e && typeof e.id === 'string' && typeof e.amountRaised === 'number' && Array.isArray(e.timeline))

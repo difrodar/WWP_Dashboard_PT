@@ -13,7 +13,7 @@ export interface FilterState {
   eventType: EventType | typeof ALL;
   reviewStatus: ReviewStatus | typeof ALL;
   reviewReason: ReviewReason | typeof ALL;
-  specialist: string;
+  accountOwner: string;
   priority: Priority | typeof ALL;
   dateFrom: ISODate | '';
   dateTo: ISODate | '';
@@ -25,7 +25,7 @@ export const DEFAULT_FILTERS: FilterState = {
   eventType: ALL,
   reviewStatus: ALL,
   reviewReason: ALL,
-  specialist: ALL,
+  accountOwner: ALL,
   priority: ALL,
   dateFrom: '',
   dateTo: '',
@@ -56,8 +56,8 @@ export function applyFilters(events: FundraisingEvent[], filters: FilterState, a
     if (filters.reviewReason !== ALL && event.reviewReason !== filters.reviewReason) return false;
     if (filters.priority !== ALL && event.priority !== filters.priority) return false;
 
-    if (filters.specialist === UNASSIGNED && event.assignedSpecialist) return false;
-    if (filters.specialist !== ALL && filters.specialist !== UNASSIGNED && event.assignedSpecialist !== filters.specialist) {
+    if (filters.accountOwner === UNASSIGNED && event.accountOwner) return false;
+    if (filters.accountOwner !== ALL && filters.accountOwner !== UNASSIGNED && event.accountOwner !== filters.accountOwner) {
       return false;
     }
 
@@ -72,7 +72,7 @@ export function applyFilters(events: FundraisingEvent[], filters: FilterState, a
   });
 }
 
-export type SortKey = 'eventDate' | 'daysSinceEvent' | 'priority' | 'eventName';
+export type SortKey = 'eventDate' | 'daysSinceEvent' | 'priority' | 'eventName' | 'fundraisingGoal';
 export type SortDirection = 'asc' | 'desc';
 export interface SortState {
   key: SortKey;
@@ -87,10 +87,11 @@ export const SORT_LABELS: Record<SortKey, string> = {
   daysSinceEvent: 'Days since event',
   priority: 'Priority',
   eventName: 'Event name',
+  fundraisingGoal: 'Fundraising goal',
 };
 
 /**
- * Stable, deterministic sort. Missing dates always sort last regardless of
+ * Stable, deterministic sort. Missing dates and missing goals always sort last regardless of
  * direction. Ties are broken by days since event (oldest first), then name.
  */
 export function sortEvents(events: FundraisingEvent[], sort: SortState, asOfDate: ISODate): FundraisingEvent[] {
@@ -122,6 +123,14 @@ export function sortEvents(events: FundraisingEvent[], sort: SortState, asOfDate
         if (da === null || db === null) return byDaysDesc(a, b);
         return dir * (da - db);
       }
+      case 'fundraisingGoal': {
+        const ga = a.fundraisingGoal;
+        const gb = b.fundraisingGoal;
+        if (ga === null && gb === null) return 0;
+        if (ga === null) return 1;
+        if (gb === null) return -1;
+        return dir * (ga - gb);
+      }
     }
   };
 
@@ -146,23 +155,23 @@ export interface FilterOptions {
   reviewStatuses: ReviewStatus[];
   reviewReasons: ReviewReason[];
   priorities: Priority[];
-  specialists: string[];
+  accountOwners: string[];
 }
 
 /** Dropdown options derived from the data, kept in the canonical order of each taxonomy. */
-export function getFilterOptions(events: FundraisingEvent[], knownSpecialists: readonly string[]): FilterOptions {
+export function getFilterOptions(events: FundraisingEvent[], knownAccountOwners: readonly string[]): FilterOptions {
   const present = <T extends string>(all: readonly T[], pick: (e: FundraisingEvent) => T) => {
     const used = new Set(events.map(pick));
     return all.filter((v) => used.has(v));
   };
-  const specialists = new Set<string>(knownSpecialists);
-  events.forEach((e) => e.assignedSpecialist && specialists.add(e.assignedSpecialist));
+  const accountOwners = new Set<string>(knownAccountOwners);
+  events.forEach((e) => e.accountOwner && accountOwners.add(e.accountOwner));
 
   return {
     eventTypes: present(EVENT_TYPES, (e) => e.eventType),
     reviewStatuses: [...REVIEW_STATUSES],
     reviewReasons: present(REVIEW_REASONS, (e) => e.reviewReason),
     priorities: [...PRIORITIES],
-    specialists: [...specialists].sort((a, b) => a.localeCompare(b)),
+    accountOwners: [...accountOwners].sort((a, b) => a.localeCompare(b)),
   };
 }

@@ -16,6 +16,11 @@ export function formatWeeks(days: number): string {
   return weeks < 1 ? '<1 wk' : `${weeks} wk`;
 }
 
+/** Host registration history, for Tristin's "have they registered before?" question. */
+export function formatHostHistory(priorRegistrations: number): string {
+  return priorRegistrations > 0 ? `Returning host · ${priorRegistrations} prior` : 'First-time host';
+}
+
 export function pluralize(n: number, singular: string, plural = `${singular}s`): string {
   return `${n} ${n === 1 ? singular : plural}`;
 }

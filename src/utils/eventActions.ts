@@ -67,15 +67,15 @@ export function changePriority(event: FundraisingEvent, priority: Priority, date
   return withEntry(event, date, actor, 'priority', `Priority changed from ${event.priority} to ${priority}.`, { priority });
 }
 
-export function assignSpecialist(event: FundraisingEvent, specialist: string | null, date: ISODate, actor: string) {
-  const next = specialist && specialist.trim() ? specialist.trim() : null;
-  if (event.assignedSpecialist === next) return event;
+export function assignAccountOwner(event: FundraisingEvent, owner: string | null, date: ISODate, actor: string) {
+  const next = owner && owner.trim() ? owner.trim() : null;
+  if (event.accountOwner === next) return event;
   const description = next
-    ? event.assignedSpecialist
-      ? `Reassigned from ${event.assignedSpecialist} to ${next}.`
+    ? event.accountOwner
+      ? `Reassigned from ${event.accountOwner} to ${next}.`
       : `Assigned to ${next}.`
-    : `Unassigned (was ${event.assignedSpecialist}).`;
-  return withEntry(event, date, actor, 'assignment', description, { assignedSpecialist: next });
+    : `Unassigned (was ${event.accountOwner}).`;
+  return withEntry(event, date, actor, 'assignment', description, { accountOwner: next });
 }
 
 export function setNextActionDate(event: FundraisingEvent, nextActionDate: ISODate | null, date: ISODate, actor: string) {
@@ -115,7 +115,7 @@ export interface CaseUpdate {
   reviewReason: ReviewReason;
   processingStatus: ProcessingStatus;
   priority: Priority;
-  assignedSpecialist: string | null;
+  accountOwner: string | null;
   nextActionDate: ISODate | null;
 }
 
@@ -126,7 +126,7 @@ export function applyCaseUpdate(event: FundraisingEvent, update: CaseUpdate, dat
   next = changeReviewReason(next, update.reviewReason, date, actor);
   next = changeProcessingStatus(next, update.processingStatus, date, actor);
   next = changePriority(next, update.priority, date, actor);
-  next = assignSpecialist(next, update.assignedSpecialist, date, actor);
+  next = assignAccountOwner(next, update.accountOwner, date, actor);
   next = setNextActionDate(next, update.nextActionDate, date, actor);
   return next;
 }

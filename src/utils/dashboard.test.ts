@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DEMO_AS_OF_DATE, createSeedEvents } from '../data/mockEvents';
-import { MOCK_SPECIALISTS } from '../data/mockSpecialists';
+import { MOCK_ACCOUNT_OWNERS } from '../data/mockAccountOwners';
 import { computeKpis } from './dashboardMetrics';
 import {
   DEFAULT_FILTERS,
@@ -14,7 +14,7 @@ import {
 import {
   addNote,
   applyCaseUpdate,
-  assignSpecialist,
+  assignAccountOwner,
   markAwaitingProcessing,
   markResolved,
   setClosed,
@@ -22,7 +22,15 @@ import {
 } from './eventActions';
 import { isFlagged } from './eventRules';
 import { addDays } from './dateUtils';
-import { formatWeeks } from './format';
+import { formatHostHistory, formatWeeks } from './format';
+
+describe('formatHostHistory', () => {
+  it('distinguishes first-time and returning hosts', () => {
+    expect(formatHostHistory(0)).toBe('First-time host');
+    expect(formatHostHistory(1)).toBe('Returning host · 1 prior');
+    expect(formatHostHistory(4)).toBe('Returning host · 4 prior');
+  });
+});
 
 describe('formatWeeks', () => {
   it.each([
@@ -79,13 +87,13 @@ describe('filters', () => {
     expect(ids(result).sort()).toEqual(['CFM-1009', 'CFM-1016']);
   });
 
-  it('filters by event type, status, reason, and specialist', () => {
+  it('filters by event type, status, reason, and account owner', () => {
     expect(ids(applyFilters(seed(), { ...DEFAULT_FILTERS, eventType: 'Gala/Dinner' }, AS_OF)).sort()).toEqual(['CFM-1007', 'CFM-1014']);
     expect(ids(applyFilters(seed(), { ...DEFAULT_FILTERS, reviewStatus: 'Host Contact Needed' }, AS_OF)).sort()).toEqual(['CFM-1012', 'CFM-1016']);
     expect(ids(applyFilters(seed(), { ...DEFAULT_FILTERS, reviewReason: 'Third-party payment collection' }, AS_OF))).toEqual(['CFM-1012']);
-    expect(ids(applyFilters(seed(), { ...DEFAULT_FILTERS, specialist: 'Elena Kowalski' }, AS_OF))).toEqual(['CFM-1009']);
-    const unassigned = applyFilters(seed(), { ...DEFAULT_FILTERS, specialist: UNASSIGNED }, AS_OF);
-    expect(unassigned.every((e) => e.assignedSpecialist === null)).toBe(true);
+    expect(ids(applyFilters(seed(), { ...DEFAULT_FILTERS, accountOwner: 'Elena Kowalski' }, AS_OF))).toEqual(['CFM-1009']);
+    const unassigned = applyFilters(seed(), { ...DEFAULT_FILTERS, accountOwner: UNASSIGNED }, AS_OF);
+    expect(unassigned.every((e) => e.accountOwner === null)).toBe(true);
   });
 
   it('filters by event date range and excludes missing dates', () => {
@@ -101,9 +109,9 @@ describe('filters', () => {
   });
 
   it('derives dropdown options from data', () => {
-    const options = getFilterOptions(seed(), MOCK_SPECIALISTS);
+    const options = getFilterOptions(seed(), MOCK_ACCOUNT_OWNERS);
     expect(options.eventTypes).toContain('Golf Tournament');
-    expect(options.specialists).toEqual([...MOCK_SPECIALISTS].sort());
+    expect(options.accountOwners).toEqual([...MOCK_ACCOUNT_OWNERS].sort());
     expect(options.priorities).toEqual(['High', 'Medium', 'Low']);
   });
 });
@@ -137,6 +145,18 @@ describe('sorting', () => {
     expect(byDateAsc.at(-1)!.id).toBe('CFM-1008');
   });
 
+  it('sorts by fundraising goal in both directions, with missing goals last', () => {
+    const all = seed();
+    all[0] = { ...all[0], fundraisingGoal: null };
+    const desc = sortEvents(all, { key: 'fundraisingGoal', direction: 'desc' }, AS_OF);
+    expect(desc[0].id).toBe('CFM-1007'); // $25,000 gala
+    expect(desc.at(-1)!.id).toBe(all[0].id);
+    const asc = sortEvents(all, { key: 'fundraisingGoal', direction: 'asc' }, AS_OF);
+    expect(asc[0].fundraisingGoal).toBe(1000);
+    expect(asc.at(-1)!.id).toBe(all[0].id);
+    const goals = asc.slice(0, -1).map((e) => e.fundraisingGoal!);
+    expect(goals).toEqual([...goals].sort((a, b) => a - b));
+  });
   it('sorts by event name', () => {
     const sorted = sortEvents(seed(), { key: 'eventName', direction: 'asc' }, AS_OF);
     const names = sorted.map((e) => e.eventName);
@@ -164,9 +184,9 @@ describe('demo actions', () => {
     expect(isFlagged(setClosed(base(), true, AS_OF, 'Tester'), AS_OF)).toBe(false);
   });
 
-  it('assigns specialists, notes, and next-action dates', () => {
-    let e = assignSpecialist(base(), 'Marcus Bell', AS_OF, 'Tester');
-    expect(e.assignedSpecialist).toBe('Marcus Bell');
+  it('assigns account owners, notes, and next-action dates', () => {
+    let e = assignAccountOwner(base(), 'Marcus Bell', AS_OF, 'Tester');
+    expect(e.accountOwner).toBe('Marcus Bell');
     e = addNote(e, '  Called host (simulated).  ', AS_OF, 'Tester');
     expect(e.notes.at(-1)!.text).toBe('Called host (simulated).');
     e = setNextActionDate(e, '2026-11-20', AS_OF, 'Tester');
@@ -182,7 +202,7 @@ describe('demo actions', () => {
       reviewReason: e.reviewReason,
       processingStatus: e.processingStatus,
       priority: e.priority,
-      assignedSpecialist: e.assignedSpecialist,
+      accountOwner: e.accountOwner,
       nextActionDate: e.nextActionDate,
     }, AS_OF, 'Tester');
     expect(unchanged).toBe(e);
@@ -192,7 +212,7 @@ describe('demo actions', () => {
       reviewReason: 'Host unresponsive',
       processingStatus: e.processingStatus,
       priority: 'High',
-      assignedSpecialist: 'Sam Okafor',
+      accountOwner: 'Sam Okafor',
       nextActionDate: '2026-11-15',
     }, AS_OF, 'Tester');
     expect(updated.timeline.length - e.timeline.length).toBe(5);

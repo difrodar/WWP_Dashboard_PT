@@ -3,7 +3,7 @@ import type { FundraisingEvent } from './types/event';
 import { AWAITING_PROCESSING_STATUS } from './types/event';
 import { useEventData } from './hooks/useEventData';
 import { useTheme } from './hooks/useTheme';
-import { MOCK_SPECIALISTS, DEMO_USER } from './data/mockSpecialists';
+import { MOCK_ACCOUNT_OWNERS, DEMO_USER } from './data/mockAccountOwners';
 import { formatLongDate } from './utils/dateUtils';
 import { computeKpis } from './utils/dashboardMetrics';
 import {
@@ -48,6 +48,7 @@ const DEFAULT_DIRECTION: Record<SortKey, SortState['direction']> = {
   eventDate: 'asc',
   daysSinceEvent: 'desc',
   priority: 'desc',
+  fundraisingGoal: 'desc',
 };
 
 const VIEW_INFO: Record<ViewMode, { title: string; description: string; style: string }> = {
@@ -85,7 +86,7 @@ export default function App() {
     return () => window.clearTimeout(t);
   }, [toast]);
 
-  const filterOptions = useMemo(() => getFilterOptions(events, MOCK_SPECIALISTS), [events]);
+  const filterOptions = useMemo(() => getFilterOptions(events, MOCK_ACCOUNT_OWNERS), [events]);
   const filtered = useMemo(() => applyFilters(events, filters, asOfDate), [events, filters, asOfDate]);
   const kpis = useMemo(() => computeKpis(filtered, asOfDate), [filtered, asOfDate]);
   const counts = useMemo<Record<ViewMode, number>>(
@@ -239,7 +240,7 @@ export default function App() {
           key={selectedEvent.id}
           event={selectedEvent}
           asOfDate={asOfDate}
-          specialists={filterOptions.specialists}
+          accountOwners={filterOptions.accountOwners}
           onClose={() => setSelectedId(null)}
           onSaveCase={(update: CaseUpdate) => act((e) => applyCaseUpdate(e, update, asOfDate, DEMO_USER), 'Case updated and recorded in the timeline.')}
           onAddNote={(text) => act((e) => addNote(e, text, asOfDate, DEMO_USER), 'Follow-up note saved.')}

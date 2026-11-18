@@ -32,11 +32,31 @@ describe('Community Fundraising Monitor', () => {
     expect(screen.getByRole('button', { name: 'Lakeside 24-Hour Gaming Marathon' })).toBeInTheDocument();
   });
 
-  it('renders all ten required columns', () => {
+  it('renders all eleven columns', () => {
     render(<App />);
-    for (const col of ['Event Name', 'Host Name', 'Event Date', 'Event Type', 'Amount Raised', 'Days Since Event', 'Review Status', 'Priority', 'Assigned Specialist', 'Next Action']) {
+    for (const col of ['Event Name', 'Host Name', 'Event Date', 'Event Type', 'Amount Raised', 'Goal', 'Days Since Event', 'Review Status', 'Priority', 'Account Owner', 'Next Action']) {
       expect(screen.getByRole('columnheader', { name: new RegExp(col) })).toBeInTheDocument();
     }
+    expect(screen.queryByRole('columnheader', { name: /Specialist/ })).not.toBeInTheDocument();
+  });
+
+  it('shows the registration goal and whether the host registered before', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    const returning = screen.getByRole('button', { name: 'Riverbend Community Pancake Breakfast' }).closest('tr')!;
+    expect(returning).toHaveTextContent('Returning host · 4 prior');
+    expect(returning).toHaveTextContent('$3,000');
+    const firstTime = screen.getByRole('button', { name: 'Copper Canyon Charity Poker Night' }).closest('tr')!;
+    expect(firstTime).toHaveTextContent('First-time host');
+    expect(firstTime).toHaveTextContent('$15,000');
+
+    await user.click(screen.getByRole('button', { name: /^Goal/ }));
+    expect(rowNames()[0]).toBe('Copper Canyon Charity Poker Night');
+
+    const dialog = await openEvent(user, 'Riverbend Community Pancake Breakfast');
+    expect(within(dialog).getByText('Host history')).toBeInTheDocument();
+    expect(within(dialog).getByText('Returning host · 4 prior', { selector: 'dd' })).toBeInTheDocument();
+    expect(within(dialog).getByText('Account owner', { selector: 'dt' })).toBeInTheDocument();
   });
 
   it('filters, updates KPIs, shows an empty state, and clears filters', async () => {
@@ -146,12 +166,12 @@ describe('Community Fundraising Monitor', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
-  it('changes status, assigns a specialist, and sets a next-action date', async () => {
+  it('changes status, assigns an account owner, and sets a next-action date', async () => {
     const user = userEvent.setup();
     render(<App />);
     const dialog = await openEvent(user, 'Copper Canyon Charity Poker Night');
     await user.selectOptions(within(dialog).getByLabelText('Review status'), 'Host Contact Needed');
-    await user.selectOptions(within(dialog).getByLabelText('Assigned specialist'), 'Elena Kowalski');
+    await user.selectOptions(within(dialog).getByLabelText('Account owner'), 'Elena Kowalski');
     fireEvent.change(within(dialog).getByLabelText('Next action date'), { target: { value: '2026-11-17' } });
     await user.click(within(dialog).getByRole('button', { name: 'Save changes' }));
 

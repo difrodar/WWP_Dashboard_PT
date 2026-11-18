@@ -17,19 +17,19 @@ const FILTER_LABELS: Record<keyof FilterState, string> = {
   eventType: 'Type',
   reviewStatus: 'Status',
   reviewReason: 'Reason',
-  specialist: 'Specialist',
+  accountOwner: 'Account owner',
   priority: 'Priority',
   dateFrom: 'From',
   dateTo: 'To',
 };
 
 /** Filters inside the collapsible "More filters" section. */
-const SECONDARY_KEYS: Array<keyof FilterState> = ['minDays', 'eventType', 'reviewReason', 'specialist', 'dateFrom', 'dateTo'];
+const SECONDARY_KEYS: Array<keyof FilterState> = ['minDays', 'eventType', 'reviewReason', 'accountOwner', 'dateFrom', 'dateTo'];
 
 const isActive = (filters: FilterState, key: keyof FilterState) => filters[key].trim() !== DEFAULT_FILTERS[key];
 
 function chipValue(key: keyof FilterState, value: string): string {
-  if (key === 'specialist' && value === UNASSIGNED) return 'Unassigned';
+  if (key === 'accountOwner' && value === UNASSIGNED) return 'Unassigned';
   if (key === 'dateFrom' || key === 'dateTo') return formatDate(value);
   if (key === 'minDays') return `≥ ${value}`;
   if (key === 'search') return `“${value}”`;
@@ -149,13 +149,13 @@ export function FilterPanel({ filters, options, activeCount, onChange, onReset }
             </select>
           </div>
           <div>
-            <label htmlFor="f-specialist" className={labelClass}>
-              Assigned specialist
+            <label htmlFor="f-owner" className={labelClass}>
+              Account owner
             </label>
-            <select id="f-specialist" className={inputClass} value={filters.specialist} onChange={set('specialist')}>
-              <option value={ALL}>All specialists</option>
+            <select id="f-owner" className={inputClass} value={filters.accountOwner} onChange={set('accountOwner')}>
+              <option value={ALL}>All account owners</option>
               <option value={UNASSIGNED}>Unassigned</option>
-              {options.specialists.map((s) => (
+              {options.accountOwners.map((s) => (
                 <option key={s}>{s}</option>
               ))}
             </select>

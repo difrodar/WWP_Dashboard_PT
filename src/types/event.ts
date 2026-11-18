@@ -115,18 +115,22 @@ export interface FundraisingEvent {
   eventName: string;
   /** Fundraiser registrant / host (fictional). */
   hostName: string;
+  /** Earlier fundraisers this host registered (synthetic; 0 = first-time host). */
+  priorRegistrations: number;
   /** Event date; null when missing in the source data. */
   eventDate: ISODate | null;
   eventType: EventType;
   /** Posted fundraising amount in USD. */
   amountRaised: number;
+  /** Fundraising goal in USD as entered on the registration form; null when not set. */
   fundraisingGoal: number | null;
   /** Staff-managed operational status. "Resolved or Funds Attributed" = resolved. */
   reviewStatus: ReviewStatus;
   reviewReason: ReviewReason;
   /** Staff-assigned / illustrative priority — not an official risk model. */
   priority: Priority;
-  assignedSpecialist: string | null;
+  /** WWP account owner responsible for the fundraiser (fictional). */
+  accountOwner: string | null;
   lastReviewed: ISODate | null;
   nextActionDate: ISODate | null;
   processingStatus: ProcessingStatus;

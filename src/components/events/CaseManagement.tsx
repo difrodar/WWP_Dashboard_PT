@@ -8,7 +8,7 @@ import { btn, inputClass, labelClass } from '../shared/buttonStyles';
 interface CaseManagementProps {
   event: FundraisingEvent;
   asOfDate: ISODate;
-  specialists: string[];
+  accountOwners: string[];
   onSave: (update: CaseUpdate) => void;
   onMarkAwaitingProcessing: () => void;
   onMarkResolved: () => void;
@@ -21,7 +21,7 @@ const toForm = (e: FundraisingEvent): CaseUpdate => ({
   reviewReason: e.reviewReason,
   processingStatus: e.processingStatus,
   priority: e.priority,
-  assignedSpecialist: e.assignedSpecialist,
+  accountOwner: e.accountOwner,
   nextActionDate: e.nextActionDate,
 });
 
@@ -30,7 +30,7 @@ const toForm = (e: FundraisingEvent): CaseUpdate => ({
  * whenever the event changes, so the form always starts from saved values.
  */
 export function CaseManagement(props: CaseManagementProps) {
-  const { event, asOfDate, specialists, onSave } = props;
+  const { event, asOfDate, accountOwners, onSave } = props;
   const [form, setForm] = useState<CaseUpdate>(() => toForm(event));
   const saved = toForm(event);
   const dirty = (Object.keys(saved) as Array<keyof CaseUpdate>).some((k) => (form[k] ?? null) !== (saved[k] ?? null));
@@ -44,9 +44,9 @@ export function CaseManagement(props: CaseManagementProps) {
     if (dirty) onSave(form);
   };
 
-  const specialistOptions = event.assignedSpecialist && !specialists.includes(event.assignedSpecialist)
-    ? [...specialists, event.assignedSpecialist]
-    : specialists;
+  const ownerOptions = event.accountOwner && !accountOwners.includes(event.accountOwner)
+    ? [...accountOwners, event.accountOwner]
+    : accountOwners;
 
   return (
     <div className="space-y-4">
@@ -91,17 +91,17 @@ export function CaseManagement(props: CaseManagementProps) {
           </select>
         </div>
         <div>
-          <label htmlFor="cm-specialist" className={labelClass}>
-            Assigned specialist
+          <label htmlFor="cm-owner" className={labelClass}>
+            Account owner
           </label>
           <select
-            id="cm-specialist"
+            id="cm-owner"
             className={inputClass}
-            value={form.assignedSpecialist ?? ''}
-            onChange={(e) => set('assignedSpecialist', e.target.value || null)}
+            value={form.accountOwner ?? ''}
+            onChange={(e) => set('accountOwner', e.target.value || null)}
           >
             <option value="">Unassigned</option>
-            {specialistOptions.map((s) => (
+            {ownerOptions.map((s) => (
               <option key={s}>{s}</option>
             ))}
           </select>

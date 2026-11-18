@@ -29,8 +29,8 @@ The dashboard finds community fundraising events that still show **$0 more than 
 | 4 | Change the **As-of date** to **11/11/2026** | "Move one day forward and the 30-day event crosses the line. Everything recalculates." | Total flagged **11**; Pinecrest now flagged. Click **Use demo date** to go back. |
 | 5 | Click the **Data-Quality Exceptions** tab | "A missing event date can't be evaluated, so it goes to a separate queue instead of being guessed." | Heroes Hoops 3-on-3, *Missing date* |
 | 6 | Back on **Active Flagged Queue**, open **Riverbend Community Pancake Breakfast** | "$0 isn't proof of a problem. Here the host mailed a check, and offline gifts take weeks. It stays in the queue but is clearly labeled." | Status *Awaiting Bank or Check Processing*, processing *Offline check in transit*, note from Priya |
-| 7 | Close it (✕ or Esc). Open **Copper Canyon Charity Poker Night** (High, unassigned) | "A new high-priority case nobody owns yet." | Specialist *Unassigned* |
-| 8 | In *Investigate & follow up*, set **Assigned specialist → Elena Kowalski**, **Review status → Host Contact Needed**, and a **Next action date**, then click **Save changes** | "Each change is logged in the timeline as a demo action." | Green toast; new timeline entries |
+| 7 | Close it (✕ or Esc). Open **Copper Canyon Charity Poker Night** (High, unassigned) | "A new high-priority case nobody owns yet." | Account owner *Unassigned* |
+| 8 | In *Investigate & follow up*, set **Account owner → Elena Kowalski**, **Review status → Host Contact Needed**, and a **Next action date**, then click **Save changes** | "Each change is logged in the timeline as a demo action." | Green toast; new timeline entries |
 | 9 | Type a note, then click **Add note** | "Notes stay with the case. Nothing is emailed; that would be a future component." | Note at the top of the notes list |
 | 10 | Open **Lakeside 24-Hour Gaming Marathon** and click **Mark Awaiting Processing** | "Waiting on a check doesn't remove it from the queue." | *Events Awaiting Processing* **3**; total still **10** |
 | 11 | Click **Mark Resolved** | "Only resolving or closing removes a case." | Total flagged **9**; it disappears from the queue but stays in **All Events** as *Not Flagged — Resolved* |
@@ -67,7 +67,14 @@ Please come with an opinion on each. Item 1 blocks further work; the rest shape 
    - events more than 30 days past that are still at **$0**
    - as a bonus, a **days/weeks since event** column for prioritizing
 
-   All of these are in the table and the detail view. Tristin also named the same legitimate delays we model: advisory board, bank, and post-event donations. Tristin asked whether anything was missing. Our extra fields (review status/reason, priority, specialist, next action) are a good topic to raise in our reply.
+   All of these are in the table and the detail view. Tristin also named the same legitimate delays we model: advisory board, bank, and post-event donations. Tristin asked whether anything was missing. Our extra fields (review status/reason, priority, account owner, next action) are a good topic to raise in our reply.
+
+   **Follow-up edits from Tristin (implemented):**
+   - The **event goal** from the registration form is now its own sortable *Goal* column.
+   - **Has the host registered before?** Each row shows *First-time host* or *Returning host · N prior* under the host name, and the drawer shows it as *Host history*. The counts are synthetic.
+   - **"Assigned specialist" is now "Account owner"** everywhere, to match WWP's naming.
+
+   The screenshots in this document were taken before these edits, so they still show the old column names.
 
 3. **Review statuses.** We currently have eight:
    - Needs Review

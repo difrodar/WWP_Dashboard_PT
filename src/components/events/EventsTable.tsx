@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import type { FundraisingEvent, ISODate } from '../../types/event';
 import { formatDate } from '../../utils/dateUtils';
-import { formatCurrency, formatWeeks } from '../../utils/format';
+import { formatCurrency, formatHostHistory, formatWeeks } from '../../utils/format';
 import {
   getDaysSinceEvent,
   getMonitoringResult,
@@ -62,7 +62,7 @@ export function EventsTable({ events, asOfDate, view, sort, selectedId, onSortCh
   return (
     // `relative` keeps absolutely-positioned sr-only text inside the scroll container (prevents page overflow on mobile).
     <div className="relative overflow-x-auto">
-      <table className="min-w-[1180px] w-full border-separate border-spacing-0 text-sm">
+      <table className="min-w-[1260px] w-full border-separate border-spacing-0 text-sm">
         <caption className="sr-only">
           Fundraising events. Select an event name to open its details.
         </caption>
@@ -74,10 +74,11 @@ export function EventsTable({ events, asOfDate, view, sort, selectedId, onSortCh
             <SortHeader label="Event Date" sortKey="eventDate" sort={sort} onSortChange={onSortChange} />
             <Plain>Event Type</Plain>
             <Plain className="text-right">Amount Raised</Plain>
+            <SortHeader label="Goal" sortKey="fundraisingGoal" sort={sort} onSortChange={onSortChange} className="text-right" />
             <SortHeader label="Days Since Event" sortKey="daysSinceEvent" sort={sort} onSortChange={onSortChange} />
             <Plain>Review Status</Plain>
             <SortHeader label="Priority" sortKey="priority" sort={sort} onSortChange={onSortChange} />
-            <Plain>Assigned Specialist</Plain>
+            <Plain>Account Owner</Plain>
             <Plain>Next Action</Plain>
           </tr>
         </thead>
@@ -113,13 +114,21 @@ export function EventsTable({ events, asOfDate, view, sort, selectedId, onSortCh
                     <MonitoringBadge result={getMonitoringResult(event, asOfDate)} />
                   </td>
                 )}
-                <td className="px-3 py-3 text-slate-700">{event.hostName}</td>
+                <td className="px-3 py-3 text-slate-700">
+                  {event.hostName}
+                  <div className={`mt-0.5 text-xs ${event.priorRegistrations > 0 ? 'text-slate-500' : 'text-brand-700'}`}>
+                    {formatHostHistory(event.priorRegistrations)}
+                  </div>
+                </td>
                 <td className="whitespace-nowrap px-3 py-3 text-slate-700">
                   {event.eventDate ? formatDate(event.eventDate) : <span className="italic text-violet-700">Missing date</span>}
                 </td>
                 <td className="px-3 py-3 text-slate-700">{event.eventType}</td>
                 <td className={`whitespace-nowrap px-3 py-3 text-right tabular-nums ${flagged ? 'font-semibold text-rose-700' : 'text-slate-700'}`}>
                   {formatCurrency(event.amountRaised)}
+                </td>
+                <td className="whitespace-nowrap px-3 py-3 text-right tabular-nums text-slate-700">
+                  {event.fundraisingGoal === null ? <span className="text-slate-400">Not set</span> : formatCurrency(event.fundraisingGoal)}
                 </td>
                 <td className="whitespace-nowrap px-3 py-3 tabular-nums text-slate-700">
                   {days === null ? (
@@ -139,7 +148,7 @@ export function EventsTable({ events, asOfDate, view, sort, selectedId, onSortCh
                 <td className="px-3 py-3">
                   <PriorityBadge priority={event.priority} />
                 </td>
-                <td className="px-3 py-3 text-slate-700">{event.assignedSpecialist ?? <span className="text-slate-400">Unassigned</span>}</td>
+                <td className="px-3 py-3 text-slate-700">{event.accountOwner ?? <span className="text-slate-400">Unassigned</span>}</td>
                 <td className="px-3 py-3">
                   <div className={`whitespace-nowrap ${overdue ? 'font-medium text-red-700' : 'text-slate-700'}`}>
                     {event.nextActionDate ? formatDate(event.nextActionDate) : <span className="text-slate-400">Not scheduled</span>}

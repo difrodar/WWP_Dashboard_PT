@@ -84,7 +84,7 @@ The app has a single page and no client-side routes, so no redirect or rewrite r
 
 ## 8. Synthetic dataset
 
-Every event, host, specialist, note, amount, and identifier is **fictional**. IDs use the prototype format `CFM-1001` and are not Salesforce or DonorDrive IDs. The data contains no emails, phone numbers, donor records, or real page IDs, and a unit test checks this.
+Every event, host, account owner, note, amount, and identifier is **fictional**. IDs use the prototype format `CFM-1001` and are not Salesforce or DonorDrive IDs. The data contains no emails, phone numbers, donor records, or real page IDs, and a unit test checks this.
 
 All dates are calculated **relative to a fixed demo as-of date of 2026-11-10**, so the boundary cases always give the same results.
 
@@ -101,7 +101,7 @@ All dates are calculated **relative to a fixed demo as-of date of 2026-11-10**, 
 | CFM-1009 | **Case 9**: 75 days, $0, attribution mismatch | **Flagged**; mismatch status and reason visible |
 | CFM-1010 | **Case 10**: resolved, $0 (funds found on another page) | Not in the active queue |
 | CFM-1011 | Extra: closed, $0, event cancelled | Not in the active queue |
-| CFM-1012 – CFM-1018 | Extra records with a mix of statuses, priorities, specialists, overdue follow-ups, and posted donations | Make filtering and sorting meaningful |
+| CFM-1012 – CFM-1018 | Extra records with a mix of statuses, priorities, account owners, first-time and returning hosts, overdue follow-ups, and posted donations | Make filtering and sorting meaningful |
 
 Default results: **10 flagged events, 4 High priority, 2 awaiting processing, average age 53.1 days.**
 
@@ -110,7 +110,7 @@ Default results: **10 flagged events, 4 High priority, 2 awaiting processing, av
 | What | Where |
 |---|---|
 | **Mock event data** | [`src/data/mockEvents.ts`](src/data/mockEvents.ts) (`createSeedEvents()`, `DEMO_AS_OF_DATE`) |
-| Mock specialists | [`src/data/mockSpecialists.ts`](src/data/mockSpecialists.ts) |
+| Mock account owners | [`src/data/mockAccountOwners.ts`](src/data/mockAccountOwners.ts) |
 | **Eligibility / flagging rules** | [`src/utils/eventRules.ts`](src/utils/eventRules.ts) |
 | **Date handling** | [`src/utils/dateUtils.ts`](src/utils/dateUtils.ts) |
 | KPI calculations | [`src/utils/dashboardMetrics.ts`](src/utils/dashboardMetrics.ts) |
@@ -162,7 +162,7 @@ To act on an event, select its name in the table. A detail drawer opens. Close i
 | Action | Effect |
 |---|---|
 | Change review status / reason / processing status / priority | Edit in the form, then **Save changes**. Each changed field adds a timeline entry. |
-| Assign specialist | Choose a fictional specialist or *Unassigned*, then save. |
+| Assign account owner | Choose a fictional account owner or *Unassigned*, then save. |
 | Set next action date | Pick a date, then save. Past dates show as **Overdue** in the table. |
 | Add follow-up note | Type a note and select **Add note**. It appears in Notes and in the timeline. |
 | **Mark Awaiting Processing** | Sets the review status to *Awaiting Bank or Check Processing*. The event **stays** in the queue. |
@@ -174,11 +174,13 @@ Every action shows a confirmation toast, updates the KPIs and the table right aw
 ### Working the queue
 
 - **Days and weeks since event.** The Days Since Event column shows both, e.g. `45 · 6 wk`, as the client contact requested. Sorting still uses days.
+- **Goal and host history.** Two more client requests. The **Goal** column shows the fundraising goal from the registration form and sorts largest-first on the first click. Under each host name, a label shows *First-time host* or *Returning host · N prior*, and the detail drawer repeats it as *Host history*.
+- **Account owner.** The person responsible for a case is called the **account owner**, matching WWP's own term. Earlier versions said "assigned specialist".
 - **KPI cards as shortcuts:**
   - *High-Priority Events* and *Events Awaiting Processing* filter the active queue. Click again to remove the filter. An active card has a highlighted outline.
   - *Total Flagged $0 Events* returns to the whole queue.
   - *Average Days Since Event* is information only.
-- **Compact filters.** Search, Priority, and Review status are always visible. **More filters** opens the rest: minimum days, event type, review reason, specialist, and date range. The button shows how many hidden filters are active, and every active filter also appears as a removable chip.
+- **Compact filters.** Search, Priority, and Review status are always visible. **More filters** opens the rest: minimum days, event type, review reason, account owner, and date range. The button shows how many hidden filters are active, and every active filter also appears as a removable chip.
 
 ### Look: Neutral or WWP colors
 
@@ -195,7 +197,7 @@ The theme is implemented as CSS variable overrides in [`src/index.css`](src/inde
 
 ## 12. localStorage and resetting the demo
 
-- All edits, including the as-of date, are saved under the browser key `cfm-demo-state-v1` and survive a page refresh.
+- All edits, including the as-of date, are saved under the browser key `cfm-demo-state-v2` and survive a page refresh.
 - Data stays in **that browser only**. Other viewers and devices see the original dataset.
 - **Reset Demo Data** in the header opens a confirmation dialog. Confirming restores the original synthetic dataset, the demo as-of date, and the default filters, sort, and view.
 - If storage is unavailable (for example, some private-browsing modes), the app still works in memory.
@@ -208,7 +210,7 @@ npm run test:watch    # watch mode
 npm run typecheck     # TypeScript only
 ```
 
-There are 70 automated tests in three files.
+There are 73 automated tests in three files.
 
 - **`src/utils/eventRules.test.ts`** covers business rules and seed data:
   - excludes 29 days; excludes exactly 30 days; includes 31 days
@@ -217,12 +219,12 @@ There are 70 automated tests in three files.
   - unresolved processing statuses stay flagged
   - recalculates after the as-of date changes; day math across daylight-saving changes
   - every one of the ten required scenarios, timeline date consistency, and a check that the data contains no contact details
-- **`src/utils/dashboard.test.ts`** covers KPIs (including the empty set, as-of changes, and resolution), every filter alone and combined, the rule that min-days never overrides the 30-day rule, views, all sort keys with missing dates sorted last, and each demo action.
+- **`src/utils/dashboard.test.ts`** covers KPIs (including the empty set, as-of changes, and resolution), every filter alone and combined, the rule that min-days never overrides the 30-day rule, views, all sort keys (including goal) with missing dates and goals sorted last, the host-history label, and each demo action.
 - **`src/App.test.tsx`** covers component and interaction behavior:
-  - disclaimer, the ten table columns, and default KPIs
+  - disclaimer, the eleven table columns, and default KPIs
   - filtering, the empty state, and clearing filters; sorting with `aria-sort`
   - opening and closing the drawer
-  - changing status, assigning a specialist, setting a next-action date, and adding a note
+  - changing status, assigning an account owner, setting a next-action date, and adding a note
   - awaiting-processing vs. resolve behavior and the KPI updates
   - the data-quality tab and as-of date recalculation
   - **persistence across a remount (simulated refresh)** and **reset with confirm or cancel**
@@ -234,10 +236,10 @@ There are 70 automated tests in three files.
 
 | Process | How the prototype supports it |
 |---|---|
-| 1.0 Register and Onboard Host | Shown through synthetic registration data: host, event type, goal, and registration entries in the timeline |
+| 1.0 Register and Onboard Host | Shown through synthetic registration data: host, host history (first-time or returning), event type, goal, and registration entries in the timeline |
 | 2.0 Maintain Fundraiser Data | Shown through record fields (event date, source system, last updated) and the **data-quality exception** view |
 | **3.0 Monitor Fundraising Activity** | As-of date, the 30-day / $0 flagging rule, the active queue, and KPIs |
-| **4.0 Investigate and Prioritize $0 Status** | Detail drawer, review status and reason, processing context, priority, specialist assignment, filters, and sorting |
+| **4.0 Investigate and Prioritize $0 Status** | Detail drawer, review status and reason, processing context, priority, account-owner assignment, filters, and sorting |
 | **5.0 Contact and Follow Up** | Follow-up notes, next-action dates and overdue highlighting, status tracking through resolution or closure, and the timeline |
 | 6.0 Process and Attribute Donations | Shown through processing status, posted amounts, and "Resolved or Funds Attributed" outcomes |
 
@@ -252,8 +254,8 @@ The dashboard is **one component** of the proposed end-to-end process, not the w
 | Flagging rule and boundaries | `eventRules.ts → isFlagged`, `getMonitoringResult` |
 | KPI cards (4) | `KpiCards.tsx`, `dashboardMetrics.ts` |
 | Filters (7 required + search) | `FilterPanel.tsx` (3 always visible, the rest under "More filters"), `eventFilters.ts → applyFilters` |
-| Sorting (date, days, priority, name) | Sortable column headers, `sortEvents` |
-| Main table (10 columns) | `EventsTable.tsx` |
+| Sorting (date, days, priority, name, goal) | Sortable column headers, `sortEvents` |
+| Main table (11 columns) | `EventsTable.tsx` |
 | Views for non-flagged and data-quality records | Tabs: Active Flagged Queue / Data-Quality Exceptions / All Events |
 | Empty states | `EmptyState.tsx` (filtered, empty queue, no exceptions) |
 | Detail drawer with all fields and timeline | `EventDrawer.tsx`, `Timeline.tsx` |
@@ -268,14 +270,15 @@ The dashboard is **one component** of the proposed end-to-end process, not the w
 | `id` | string | Fictional prototype ID (`CFM-####`) |
 | `eventName` | string | Fundraising event name |
 | `hostName` | string | Fundraiser registrant / host (fictional) |
+| `priorRegistrations` | number | Earlier fundraisers registered by the same host (synthetic); 0 = first-time host |
 | `eventDate` | ISO date \| null | Event date; null means a data-quality exception |
 | `eventType` | union | e.g. Golf Tournament, 5K Run/Walk, Gala/Dinner |
 | `amountRaised` | number (USD) | Posted fundraising amount |
-| `fundraisingGoal` | number \| null | Optional target |
+| `fundraisingGoal` | number \| null | Goal from the registration form (USD); shown in the table and sortable |
 | `reviewStatus` | union (8) | Staff-managed operational status; *Resolved or Funds Attributed* means resolved |
 | `reviewReason` | union | Why the event is under review or delayed (demo taxonomy) |
 | `priority` | High \| Medium \| Low | Staff-assigned, illustrative |
-| `assignedSpecialist` | string \| null | Fictional specialist |
+| `accountOwner` | string \| null | WWP account owner (fictional) |
 | `lastReviewed` | ISO date \| null | Last review action |
 | `nextActionDate` | ISO date \| null | Scheduled follow-up |
 | `processingStatus` | union | Donation processing context (demo taxonomy) |
@@ -298,6 +301,23 @@ The UI depends only on the `FundraisingEvent[]` returned by `useEventData`. A fu
 
 WWP would need to approve the data access, field mappings, the official status and reason taxonomies, and any prioritization model before this could happen.
 
+### NPSP compatibility of the client-requested fields
+
+The dashboard must stay compatible with Salesforce NPSP. "Compatible" means every field can be filled from a real NPSP or DonorDrive record through the adapter in step 2; the prototype has no live connection. The internal field names (e.g. `accountOwner`) stay inside the app and never reach Salesforce, so renaming them does not affect compatibility.
+
+| Dashboard field | Likely source | Notes |
+|---|---|---|
+| `accountOwner` (*Account owner*) | Salesforce's standard owner field (`OwnerId`); "Account Owner" is Salesforce's own label | Salesforce stores a user ID, not a name. The adapter would look up the user's name. |
+| `fundraisingGoal` (*Goal*) | The DonorDrive registration's fundraising goal, or an NPSP Campaign field. *Expected Revenue in Campaign* is often used as a goal, or WWP may have a custom field. | Map to whichever field WWP fills from the registration form. |
+| `priorRegistrations` (*Host history*) | No standard NPSP field. It would be counted from the host's earlier registrations in DonorDrive or NPSP (e.g. Campaign Member records), or from an NPSP Customizable Rollup on the host's Contact. | Calculated in a real integration rather than read from one field. The seed data stores a fixed synthetic number. |
+
+**Open questions for WWP (not yet confirmed):**
+
+- Are community fundraising events stored as Campaigns or as a custom object in WWP's Salesforce org?
+- Which field holds the goal from the registration form?
+- Does *account owner* mean the owner of the host's Account or the owner of the event record? These can be different people in Salesforce.
+- Which source should count earlier registrations: DonorDrive, NPSP, or both?
+
 ## 18. Prototype limitations
 
 - Fictional data only. There is no real integration, authentication, user roles, or multi-user sync.
@@ -317,7 +337,7 @@ src/
     filters/     FilterPanel
     events/      ViewTabs, EventsTable, EventDrawer, CaseManagement, Timeline
     shared/      Badges, EmptyState, ConfirmDialog, Toast, buttonStyles
-  data/          mockEvents.ts, mockSpecialists.ts
+  data/          mockEvents.ts, mockAccountOwners.ts
   hooks/         useEventData.ts
   types/         event.ts
   utils/         eventRules.ts, dateUtils.ts, dashboardMetrics.ts, eventFilters.ts,
