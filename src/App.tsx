@@ -70,7 +70,7 @@ const VIEW_INFO: Record<ViewMode, { title: string; description: string; style: s
 };
 
 export default function App() {
-  const { events, asOfDate, setAsOfDate, updateEvent, resetDemo } = useEventData();
+  const { events, asOfDate, today, setAsOfDate, updateEvent, resetDemo } = useEventData();
   const { theme, setTheme } = useTheme();
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
   const [sort, setSort] = useState<SortState>(DEFAULT_SORT);
@@ -174,6 +174,7 @@ export default function App() {
       </a>
       <AppHeader
         asOfDate={asOfDate}
+        today={today}
         onAsOfDateChange={setAsOfDate}
         onResetDemo={() => setConfirmReset(true)}
         theme={theme}

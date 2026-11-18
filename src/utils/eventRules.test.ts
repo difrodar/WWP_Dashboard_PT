@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { FundraisingEvent } from '../types/event';
-import { DEMO_AS_OF_DATE, createSeedEvents } from '../data/mockEvents';
-import { addDays, daysBetween, formatDate, isValidISODate, toDayNumber } from './dateUtils';
+import { createSeedEvents } from '../data/mockEvents';
+import { addDays, daysBetween, formatDate, getTodayISO, isValidISODate, toDayNumber } from './dateUtils';
 import {
   getDaysSinceEvent,
   getMonitoringResult,
@@ -160,11 +160,22 @@ describe('30-day $0 flagging rule', () => {
 });
 
 describe('synthetic seed data', () => {
-  const seed = createSeedEvents();
+  const seed = createSeedEvents(AS_OF);
   const byId = (id: string) => seed.find((e) => e.id === id)!;
 
-  it('uses the fixed demo as-of date', () => {
-    expect(DEMO_AS_OF_DATE).toBe('2026-11-10');
+  it('defaults to today and keeps the same scenarios for any as-of date', () => {
+    expect(getTodayISO()).toBe(AS_OF); // clock pinned in src/test/setup.ts
+    expect(createSeedEvents()).toEqual(seed);
+    const later = createSeedEvents('2027-03-01');
+    const lakeside = later.find((e) => e.id === 'CFM-1003')!;
+    expect(getDaysSinceEvent(lakeside, '2027-03-01')).toBe(31);
+    expect(isFlagged(lakeside, '2027-03-01')).toBe(true);
+  });
+
+  it("uses the viewer's local calendar date for today", () => {
+    // 11:30 pm in Los Angeles is already the next day in UTC.
+    expect(getTodayISO(new Date(2026, 10, 10, 23, 30))).toBe('2026-11-10');
+    expect(getTodayISO(new Date(2026, 0, 5, 0, 5))).toBe('2026-01-05');
   });
 
   it('contains at least ten distinct events with unique ids', () => {
@@ -186,8 +197,8 @@ describe('synthetic seed data', () => {
     ['CFM-1011', 120, 'closed'],
   ] as const)('%s is %s days old and evaluates to %s', (id, days, result) => {
     const e = byId(id);
-    expect(getDaysSinceEvent(e, DEMO_AS_OF_DATE)).toBe(days);
-    expect(getMonitoringResult(e, DEMO_AS_OF_DATE)).toBe(result);
+    expect(getDaysSinceEvent(e, AS_OF)).toBe(days);
+    expect(getMonitoringResult(e, AS_OF)).toBe(result);
   });
 
   it('preserves the required context on scenario records', () => {
@@ -203,10 +214,10 @@ describe('synthetic seed data', () => {
     for (const e of seed) {
       for (const entry of e.timeline) {
         expect(isValidISODate(entry.date)).toBe(true);
-        expect(daysBetween(entry.date, DEMO_AS_OF_DATE)!).toBeGreaterThanOrEqual(0); // nothing recorded in the future
+        expect(daysBetween(entry.date, AS_OF)!).toBeGreaterThanOrEqual(0); // nothing recorded in the future
         expect(daysBetween(entry.date, e.lastUpdated)!).toBeGreaterThanOrEqual(0);
       }
-      if (e.lastReviewed) expect(daysBetween(e.lastReviewed, DEMO_AS_OF_DATE)!).toBeGreaterThanOrEqual(0);
+      if (e.lastReviewed) expect(daysBetween(e.lastReviewed, AS_OF)!).toBeGreaterThanOrEqual(0);
       const registration = e.timeline.find((t) => t.type === 'registration');
       expect(registration).toBeDefined();
       if (e.eventDate) expect(daysBetween(registration!.date, e.eventDate)!).toBeGreaterThan(0);

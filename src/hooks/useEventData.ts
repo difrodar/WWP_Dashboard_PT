@@ -4,8 +4,9 @@ import { isValidISODate } from '../utils/dateUtils';
 import { clearDemoState, createInitialState, loadDemoState, saveDemoState, type DemoState } from '../utils/demoStorage';
 
 /**
- * Owns the demo dataset and the as-of date. Every change is written to
- * localStorage so edits survive a page refresh until "Reset Demo Data".
+ * Owns the demo dataset and the as-of date. The as-of date always starts as
+ * today; event edits are written to localStorage so they survive a page
+ * refresh until "Reset Demo Data".
  */
 export function useEventData() {
   const [state, setState] = useState<DemoState>(loadDemoState);
@@ -28,5 +29,5 @@ export function useEventData() {
     setState(createInitialState());
   }, []);
 
-  return { events: state.events, asOfDate: state.asOfDate, setAsOfDate, updateEvent, resetDemo };
+  return { events: state.events, asOfDate: state.asOfDate, today: state.anchorDate, setAsOfDate, updateEvent, resetDemo };
 }

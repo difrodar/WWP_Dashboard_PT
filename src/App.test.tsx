@@ -3,6 +3,7 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import App from './App';
 import { STORAGE_KEY } from './utils/demoStorage';
+import { createSeedEvents } from './data/mockEvents';
 
 const kpi = (label: string) => document.querySelector(`[data-kpi="${label}"] [data-kpi-value]`)?.textContent;
 const bodyRows = () => within(screen.getByRole('table')).getAllByRole('row').slice(1);
@@ -239,6 +240,40 @@ describe('Community Fundraising Monitor', () => {
     expect(kpi('Total Flagged $0 Events')).toBe('0');
     expect(kpi('Average Days Since Event')).toBe('—');
     expect(screen.getByText('No events currently need review')).toBeInTheDocument();
+  });
+
+  it('always starts at today; a custom as-of date lasts only until reload', async () => {
+    const user = userEvent.setup();
+    const first = render(<App />);
+    expect(screen.getByText(/\(today\)/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Back to today' })).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('As-of date'), { target: { value: '2026-11-11' } });
+    expect(screen.getByText(/custom date/)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Back to today' }));
+    expect(screen.getByLabelText('As-of date')).toHaveValue('2026-11-10');
+
+    fireEvent.change(screen.getByLabelText('As-of date'), { target: { value: '2026-12-01' } });
+    first.unmount();
+    render(<App />); // simulates a page refresh
+    expect(screen.getByLabelText('As-of date')).toHaveValue('2026-11-10');
+  });
+
+  it('moves saved demo edits from an earlier day forward to today', () => {
+    // Edits saved a week ago: Lakeside (31 days old back then) was resolved.
+    const events = createSeedEvents('2026-11-03').map((e) =>
+      e.id === 'CFM-1003' ? { ...e, reviewStatus: 'Resolved or Funds Attributed' as const } : e,
+    );
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: 3, anchorDate: '2026-11-03', events }));
+
+    render(<App />);
+    expect(screen.getByLabelText('As-of date')).toHaveValue('2026-11-10');
+    // The edit is kept, and every other event keeps its age, so the boundary cases still hold.
+    expect(kpi('Total Flagged $0 Events')).toBe('9');
+    expect(screen.queryByRole('button', { name: 'Lakeside 24-Hour Gaming Marathon' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Coastal Valor 5K' })).not.toBeInTheDocument();
+    const riverbend = screen.getByRole('button', { name: 'Riverbend Community Pancake Breakfast' }).closest('tr')!;
+    expect(riverbend).toHaveTextContent('60 · 8 wk');
   });
 
   it('persists demo edits across a reload and resets them after confirmation', async () => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEMO_AS_OF_DATE, createSeedEvents } from '../data/mockEvents';
+import { createSeedEvents } from '../data/mockEvents';
 import { MOCK_ACCOUNT_OWNERS } from '../data/mockAccountOwners';
 import { computeKpis } from './dashboardMetrics';
 import {
@@ -45,8 +45,8 @@ describe('formatWeeks', () => {
   });
 });
 
-const AS_OF = DEMO_AS_OF_DATE;
-const seed = () => createSeedEvents();
+const AS_OF = '2026-11-10';
+const seed = () => createSeedEvents(AS_OF);
 const ids = (events: { id: string }[]) => events.map((e) => e.id);
 
 describe('KPIs', () => {

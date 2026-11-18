@@ -1,10 +1,11 @@
 import type { ISODate } from '../../types/event';
 import type { Theme } from '../../hooks/useTheme';
 import { formatLongDate, isValidISODate } from '../../utils/dateUtils';
-import { DEMO_AS_OF_DATE } from '../../data/mockEvents';
 
 interface AppHeaderProps {
   asOfDate: ISODate;
+  /** Today's date (the default as-of date). */
+  today: ISODate;
   onAsOfDateChange: (date: ISODate) => void;
   onResetDemo: () => void;
   theme: Theme;
@@ -18,8 +19,8 @@ const THEMES: Array<{ id: Theme; label: string }> = [
 
 const headerFocus = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-400';
 
-export function AppHeader({ asOfDate, onAsOfDateChange, onResetDemo, theme, onThemeChange }: AppHeaderProps) {
-  const isDemoDate = asOfDate === DEMO_AS_OF_DATE;
+export function AppHeader({ asOfDate, today, onAsOfDateChange, onResetDemo, theme, onThemeChange }: AppHeaderProps) {
+  const isToday = asOfDate === today;
 
   return (
     <header>
@@ -52,13 +53,13 @@ export function AppHeader({ asOfDate, onAsOfDateChange, onResetDemo, theme, onTh
                   aria-describedby="as-of-date-display"
                   className="rounded-md border-0 bg-white px-2.5 py-1.5 text-sm text-slate-900 shadow-sm ring-1 ring-inset ring-white/30 focus:ring-2 focus:ring-amber-400 focus:outline-none"
                 />
-                {!isDemoDate && (
+                {!isToday && (
                   <button
                     type="button"
-                    onClick={() => onAsOfDateChange(DEMO_AS_OF_DATE)}
+                    onClick={() => onAsOfDateChange(today)}
                     className={`rounded-md px-2 py-1.5 text-xs font-medium text-brand-100 underline-offset-2 hover:underline ${headerFocus}`}
                   >
-                    Use demo date
+                    Back to today
                   </button>
                 )}
               </div>
@@ -115,7 +116,7 @@ export function AppHeader({ asOfDate, onAsOfDateChange, onResetDemo, theme, onTh
           </p>
           <p id="as-of-date-display" className="text-sm text-amber-900">
             Showing results as of <strong className="font-semibold">{formatLongDate(asOfDate)}</strong>
-            {isDemoDate ? ' (demo date)' : ' (custom date)'}
+            {isToday ? ' (today)' : ' (custom date — reloading the page returns to today)'}
           </p>
         </div>
       </div>

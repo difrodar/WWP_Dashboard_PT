@@ -86,9 +86,9 @@ The app has a single page and no client-side routes, so no redirect or rewrite r
 
 Every event, host, account owner, note, amount, and identifier is **fictional**. IDs use the prototype format `CFM-1001` and are not Salesforce or DonorDrive IDs. The data contains no emails, phone numbers, donor records, or real page IDs, and a unit test checks this.
 
-All dates are calculated **relative to a fixed demo as-of date of 2026-11-10**, so the boundary cases always give the same results.
+All dates are calculated **relative to the as-of date, which is always today** (see section 9), so the boundary cases give the same results on any day.
 
-| ID | Scenario | Expected result (as of 2026-11-10) |
+| ID | Scenario | Expected result (as of today) |
 |---|---|---|
 | CFM-1001 | **Case 1**: 29 days, $0 | Not flagged (within 30 days) |
 | CFM-1002 | **Case 2**: exactly 30 days, $0 | Not flagged |
@@ -109,7 +109,7 @@ Default results: **10 flagged events, 4 High priority, 2 awaiting processing, av
 
 | What | Where |
 |---|---|
-| **Mock event data** | [`src/data/mockEvents.ts`](src/data/mockEvents.ts) (`createSeedEvents()`, `DEMO_AS_OF_DATE`) |
+| **Mock event data** | [`src/data/mockEvents.ts`](src/data/mockEvents.ts) (`createSeedEvents(asOfDate)`, dated relative to today) |
 | Mock account owners | [`src/data/mockAccountOwners.ts`](src/data/mockAccountOwners.ts) |
 | **Eligibility / flagging rules** | [`src/utils/eventRules.ts`](src/utils/eventRules.ts) |
 | **Date handling** | [`src/utils/dateUtils.ts`](src/utils/dateUtils.ts) |
@@ -121,17 +121,19 @@ Default results: **10 flagged events, 4 High priority, 2 awaiting processing, av
 
 None of the business rules live in React components, so they can be tested on their own.
 
-## 9. Configurable as-of date
+## 9. As-of date: always today
 
-The **As-of date** control in the header sets the "today" used in every calculation. It starts at **November 10, 2026** and does not depend on the computer's clock, so a demo gives the same results on any day.
+The **As-of date** in the header is the "today" used in every calculation. On every page load it is set to **today's date in the viewer's own time zone**.
 
-Changing the as-of date immediately recalculates days since each event, which events are flagged, the KPIs, the tab counts, filtered results, and overdue next-action dates. For example, moving it forward one day pulls the exactly-30-day event (CFM-1002) into the queue. **Use demo date** goes back to 2026-11-10.
+The synthetic events are dated *relative to today*, so the boundary cases and default numbers below are the same on any day. Saved demo edits from an earlier day are moved forward by the same number of days when the page is reopened, so they keep their ages too.
 
-Notes, status changes, and other demo actions are **dated with the as-of date**, which acts as the simulated working day, so the timeline stays consistent with the scenario.
+The date can still be changed by hand for a demo. That immediately recalculates days since each event, which events are flagged, the KPIs, the tab counts, filtered results, and overdue next-action dates. For example, moving it forward one day pulls the exactly-30-day event (CFM-1002) into the queue. A changed date lasts only for the current page: **Back to today** returns to today, and so does reloading the page.
+
+Notes, status changes, and other demo actions are **dated with the as-of date**, so the timeline stays consistent with the scenario.
 
 ### Date handling
 
-Dates are stored as ISO date-only strings (`YYYY-MM-DD`). They are converted to whole-day numbers with `Date.UTC` and formatted in UTC. Local time zones and daylight-saving changes cannot cause off-by-one errors, and the tests run in `America/Los_Angeles` to prove it.
+Dates are stored as ISO date-only strings (`YYYY-MM-DD`). They are converted to whole-day numbers with `Date.UTC` and formatted in UTC. Local time zones and daylight-saving changes cannot cause off-by-one errors, and the tests run in `America/Los_Angeles` to prove it. The local clock is read in one place only, `getTodayISO()`, which takes the viewer's local calendar date as today.
 
 ## 10. 30-day monitoring logic
 
@@ -197,9 +199,10 @@ The theme is implemented as CSS variable overrides in [`src/index.css`](src/inde
 
 ## 12. localStorage and resetting the demo
 
-- All edits, including the as-of date, are saved under the browser key `cfm-demo-state-v2` and survive a page refresh.
+- Event edits are saved under the browser key `cfm-demo-state-v3` and survive a page refresh. The as-of date is **not** saved; it is always today on load.
+- Edits saved on an earlier day are shifted forward to today when the page is reopened, so every event keeps the same age.
 - Data stays in **that browser only**. Other viewers and devices see the original dataset.
-- **Reset Demo Data** in the header opens a confirmation dialog. Confirming restores the original synthetic dataset, the demo as-of date, and the default filters, sort, and view.
+- **Reset Demo Data** in the header opens a confirmation dialog. Confirming restores the original synthetic dataset (dated relative to today), the as-of date (today), and the default filters, sort, and view.
 - If storage is unavailable (for example, some private-browsing modes), the app still works in memory.
 
 ## 13. Testing
@@ -210,23 +213,24 @@ npm run test:watch    # watch mode
 npm run typecheck     # TypeScript only
 ```
 
-There are 73 automated tests in three files.
+There are 76 automated tests in three files.
 
 - **`src/utils/eventRules.test.ts`** covers business rules and seed data:
   - excludes 29 days; excludes exactly 30 days; includes 31 days
   - exactly-$0 eligibility; excludes positive amounts; excludes future dates
   - routes missing or invalid dates to data quality; excludes resolved and closed events
   - unresolved processing statuses stay flagged
-  - recalculates after the as-of date changes; day math across daylight-saving changes
+  - recalculates after the as-of date changes; day math across daylight-saving changes; "today" is the local calendar date; seed data keeps its scenarios for any as-of date
   - every one of the ten required scenarios, timeline date consistency, and a check that the data contains no contact details
 - **`src/utils/dashboard.test.ts`** covers KPIs (including the empty set, as-of changes, and resolution), every filter alone and combined, the rule that min-days never overrides the 30-day rule, views, all sort keys (including goal) with missing dates and goals sorted last, the host-history label, and each demo action.
+- Tests pin the clock to **November 10, 2026** (local noon in `America/Los_Angeles`, see `src/test/setup.ts`), so expected values never depend on the day the tests run.
 - **`src/App.test.tsx`** covers component and interaction behavior:
   - disclaimer, the eleven table columns, and default KPIs
   - filtering, the empty state, and clearing filters; sorting with `aria-sort`
   - opening and closing the drawer
   - changing status, assigning an account owner, setting a next-action date, and adding a note
   - awaiting-processing vs. resolve behavior and the KPI updates
-  - the data-quality tab and as-of date recalculation
+  - the data-quality tab and as-of date recalculation; the as-of date always starts at today (a custom date does not survive a reload); saved edits from an earlier day are moved forward to today
   - **persistence across a remount (simulated refresh)** and **reset with confirm or cancel**
   - collapsed "More filters" with the hidden-filter count; the days/weeks display
   - KPI shortcut toggles
@@ -250,7 +254,7 @@ The dashboard is **one component** of the proposed end-to-end process, not the w
 | Requirement | Feature / location |
 |---|---|
 | Disclaimer visible in app | Amber banner under the header (`AppHeader.tsx`) and footer |
-| Configurable as-of date | Header date input → `useEventData.setAsOfDate` |
+| As-of date (always today, adjustable per session) | `getTodayISO` in `dateUtils.ts`; header date input → `useEventData.setAsOfDate` |
 | Flagging rule and boundaries | `eventRules.ts → isFlagged`, `getMonitoringResult` |
 | KPI cards (4) | `KpiCards.tsx`, `dashboardMetrics.ts` |
 | Filters (7 required + search) | `FilterPanel.tsx` (3 always visible, the rest under "More filters"), `eventFilters.ts → applyFilters` |
@@ -297,7 +301,7 @@ The UI depends only on the `FundraisingEvent[]` returned by `useEventData`. A fu
 1. Add a small backend or integration service that queries Salesforce NPSP and DonorDrive with proper authentication. Credentials would live on the server, never in the browser.
 2. Map those records to the `FundraisingEvent` type in one adapter function.
 3. Replace `loadDemoState()` / `saveDemoState()` with API calls, so status, notes, and assignments are written back to the system of record instead of `localStorage`.
-4. Set the as-of date to "today" in production while keeping it configurable for audits and testing.
+4. Keep the as-of date at "today" (already the default) and keep it adjustable for audits and testing.
 
 WWP would need to approve the data access, field mappings, the official status and reason taxonomies, and any prioritization model before this could happen.
 

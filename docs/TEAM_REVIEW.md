@@ -24,9 +24,9 @@ The dashboard finds community fundraising events that still show **$0 more than 
 | # | Do this | Say this | You should see |
 |---|---|---|---|
 | 1 | Open the app | "Staff land on the active queue: only events with $0, more than 30 days old, not resolved or closed." | KPIs **10 / 4 / 2 / 53.1**, 10 rows |
-| 2 | Point at the amber banner and the as-of date | "Synthetic data only. The as-of date is our 'today', fixed so every demo gives the same results." | *As of Tuesday, November 10, 2026* |
+| 2 | Point at the amber banner and the as-of date | "Synthetic data only. The as-of date is always today, and the sample events are dated relative to it, so every demo gives the same results." | *As of <today's date> (today)* |
 | 3 | Click the **All Events** tab, then click **Days Since Event** twice (▲ ascending) | "Here are the boundary cases. 29 and exactly 30 days are *not* flagged; 31 is." | Autumn Honor Gala *Upcoming*, Coastal Valor 5K *29*, Pinecrest Golf *30*, Lakeside Gaming *31 → Flagged* |
-| 4 | Change the **As-of date** to **11/11/2026** | "Move one day forward and the 30-day event crosses the line. Everything recalculates." | Total flagged **11**; Pinecrest now flagged. Click **Use demo date** to go back. |
+| 4 | Change the **As-of date** to **tomorrow's date** | "Move one day forward and the 30-day event crosses the line. Everything recalculates." | Total flagged **11**; Pinecrest now flagged. Click **Back to today** to go back. |
 | 5 | Click the **Data-Quality Exceptions** tab | "A missing event date can't be evaluated, so it goes to a separate queue instead of being guessed." | Heroes Hoops 3-on-3, *Missing date* |
 | 6 | Back on **Active Flagged Queue**, open **Riverbend Community Pancake Breakfast** | "$0 isn't proof of a problem. Here the host mailed a check, and offline gifts take weeks. It stays in the queue but is clearly labeled." | Status *Awaiting Bank or Check Processing*, processing *Offline check in transit*, note from Priya |
 | 7 | Close it (✕ or Esc). Open **Copper Canyon Charity Poker Night** (High, unassigned) | "A new high-priority case nobody owns yet." | Account owner *Unassigned* |

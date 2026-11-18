@@ -1,17 +1,20 @@
 import type { FollowUpNote, FundraisingEvent, ISODate, TimelineEntry, TimelineEntryType } from '../types/event';
-import { addDays } from '../utils/dateUtils';
+import { addDays, getTodayISO } from '../utils/dateUtils';
 
 /**
  * SYNTHETIC DATASET — every event, host, account owner, amount, and note is fictional.
  * Nothing here comes from Wounded Warrior Project, Salesforce NPSP, or DonorDrive.
  *
- * All dates are calculated relative to DEMO_AS_OF_DATE so the boundary scenarios
- * (29 / 30 / 31 days, future, missing date, …) stay reproducible.
+ * All dates are calculated relative to the as-of date passed to `createSeedEvents`
+ * (today by default), so the boundary scenarios (29 / 30 / 31 days, future,
+ * missing date, …) give the same results on any day.
  */
-export const DEMO_AS_OF_DATE: ISODate = '2026-11-10';
 
-/** Date `n` days before the demo as-of date (negative `n` = in the future). */
-const ago = (n: number): ISODate => addDays(DEMO_AS_OF_DATE, -n);
+/** As-of date the seed is currently being built for; set by `createSeedEvents`. */
+let anchor: ISODate = getTodayISO();
+
+/** Date `n` days before the as-of date (negative `n` = in the future). */
+const ago = (n: number): ISODate => addDays(anchor, -n);
 
 const RULE = 'Monitoring rule (simulated)';
 const LEAD = 'Team Lead (fictional)';
@@ -38,7 +41,7 @@ const flaggedEntry = (daysAgo: number): [number, TimelineEntryType, string, stri
 ];
 
 /**
- * Scenario map (as of 2026-11-10):
+ * Scenario map (relative to the as-of date):
  *  CFM-1001  Case 1  — 29 days, $0               → not flagged
  *  CFM-1002  Case 2  — exactly 30 days, $0       → not flagged
  *  CFM-1003  Case 3  — 31 days, $0               → flagged
@@ -52,7 +55,8 @@ const flaggedEntry = (daysAgo: number): [number, TimelineEntryType, string, stri
  *  CFM-1011  Extra   — closed, $0                → not in active queue
  *  CFM-1012…1018     — additional records for filtering and sorting
  */
-export function createSeedEvents(): FundraisingEvent[] {
+export function createSeedEvents(asOfDate: ISODate = getTodayISO()): FundraisingEvent[] {
+  anchor = asOfDate;
   return [
     {
       id: 'CFM-1001',

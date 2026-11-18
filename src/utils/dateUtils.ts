@@ -33,6 +33,15 @@ export function isValidISODate(value: unknown): value is ISODate {
   return toDayNumber(value) !== null;
 }
 
+/**
+ * Today's calendar date in the viewer's own time zone, as `YYYY-MM-DD`.
+ * This is the only helper that reads the local clock; it is the dashboard's as-of date.
+ */
+export function getTodayISO(now: Date = new Date()): ISODate {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+}
+
 /** Converts a day number back to `YYYY-MM-DD`. */
 export function fromDayNumber(dayNumber: number): ISODate {
   return new Date(dayNumber * MS_PER_DAY).toISOString().slice(0, 10);
